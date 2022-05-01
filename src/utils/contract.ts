@@ -1,0 +1,110 @@
+import axios, { AxiosResponse } from "axios";
+import { utils } from "ethers";
+import { gql } from "@apollo/client";
+import { firstValueFrom } from "rxjs";
+import { graphql } from "@reef-defi/react-lib";
+
+const CONTRACT_VERIFICATION_URL = "/api/verificator/submit-verification";
+
+interface BaseContract {
+    runs: number;
+    source: string;
+    target: string;
+    optimization: string;
+    compilerVersion: string;
+}
+
+export interface VerificationContractReq extends BaseContract {
+    name: string;
+    address: string;
+    filename: string;
+    arguments: string;
+}
+
+export interface ReefContract extends BaseContract {
+    filename: string;
+    contractName: string;
+}
+
+const contractVerificatorApi = axios.create();
+
+const toContractAddress = (address: string): string => utils.getAddress(address);
+
+const CONTRACT_EXISTS_GQL = gql`
+    subscription query($address: String!) {
+        contract(where: { address: { _eq: $address } }) {
+            address
+        }
+    }
+`;
+
+/* es-disable-next-line */
+const isContrIndexed = async (address: string): Promise<boolean> =>
+    new Promise(async (resolve) => {
+        const tmt = setTimeout(() => {
+            resolve(false);
+        }, 120000);
+        const apollo = await firstValueFrom(graphql.apolloClientInstance$);
+        apollo
+            .subscribe({
+                query: CONTRACT_EXISTS_GQL,
+                variables: { address },
+                fetchPolicy: "network-only",
+            })
+            .subscribe({
+                next(result) {
+                    if (result.data.contract && result.data.contract.length) {
+                        clearTimeout(tmt);
+                        resolve(true);
+                    }
+                },
+                error(err) {
+                    clearTimeout(tmt);
+                    console.log("isContrIndexed error=", err);
+                    resolve(false);
+                },
+                complete() {
+                    clearTimeout(tmt);
+                },
+            });
+    });
+
+export const verifyContract = async (
+    deployedContractAddress: string,
+    contract: ReefContract,
+    arg: string,
+    url?: string
+): Promise<boolean> => {
+    if (!url) {
+        return false;
+    }
+
+    try {
+        const contractAddress = toContractAddress(deployedContractAddress);
+        if (!(await isContrIndexed(contractAddress))) {
+            // if (!await firstValueFrom(isContractIndexed$(contractAddress))) {
+            return false;
+        }
+        const body: VerificationContractReq = {
+            address: contractAddress,
+            arguments: arg,
+            name: contract.contractName,
+            filename: contract.filename,
+            target: contract.target,
+            source: contract.source,
+            optimization: contract.optimization,
+            compilerVersion: contract.compilerVersion,
+            // not required - license: contract.license,
+            runs: contract.runs,
+        };
+        await contractVerificatorApi.post<VerificationContractReq, AxiosResponse<string>>(
+            `${url}${CONTRACT_VERIFICATION_URL}`,
+            body
+        );
+        // (verification_test, body)
+        return true;
+    } catch (err) {
+        console.error("Verification err=", err);
+        return false;
+    }
+};
