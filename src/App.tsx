@@ -1,6 +1,5 @@
 import React from "react";
-import { appState, defaultOptions, graphql, hooks, ReefSigner } from "@reef-defi/react-lib";
-import { ApolloProvider, ApolloClient } from "@apollo/client";
+import { appState, defaultOptions, hooks, ReefSigner } from "@reef-defi/react-lib";
 import { ToastContainer, toast } from "react-toastify";
 import { useHistory } from "react-router-dom";
 import ContentRouter from "./pages/ContentRouter";
@@ -18,44 +17,33 @@ const App = (): JSX.Element => {
     const currentSigner: ReefSigner | undefined = hooks.useObservableState(
         appState.selectedSigner$
     );
-    const apollo: ApolloClient<any> | undefined = hooks.useObservableState(
-        graphql.apolloClientInstance$
-    );
     hooks.useBindEvmAddressAlert(currentSigner, provider);
 
     return (
-        <>
-            {apollo && (
-                <ApolloProvider client={apollo}>
-                    <OptionContext.Provider
-                        value={{ ...defaultOptions, back: history.goBack, notify }}
-                    >
-                        <div className="App d-flex w-100 h-100">
-                            <div className="w-100 main-content">
-                                {!loading && !error && (
-                                    <>
-                                        <Nav display={!loading && !error} />
-                                        <ContentRouter />
-                                    </>
-                                )}
+        <OptionContext.Provider value={{ ...defaultOptions, back: history.goBack, notify }}>
+            <div className="App d-flex w-100 h-100">
+                <div className="w-100 main-content">
+                    {!loading && !error && (
+                        <>
+                            <Nav display={!loading && !error} />
+                            <ContentRouter />
+                        </>
+                    )}
 
-                                <ToastContainer
-                                    draggable
-                                    newestOnTop
-                                    closeOnClick
-                                    hideProgressBar
-                                    position={toast.POSITION.BOTTOM_LEFT}
-                                    autoClose={5000}
-                                    rtl={false}
-                                    pauseOnFocusLoss={false}
-                                    pauseOnHover={false}
-                                />
-                            </div>
-                        </div>
-                    </OptionContext.Provider>
-                </ApolloProvider>
-            )}
-        </>
+                    <ToastContainer
+                        draggable
+                        newestOnTop
+                        closeOnClick
+                        hideProgressBar
+                        position={toast.POSITION.BOTTOM_LEFT}
+                        autoClose={5000}
+                        rtl={false}
+                        pauseOnFocusLoss={false}
+                        pauseOnHover={false}
+                    />
+                </div>
+            </div>
+        </OptionContext.Provider>
     );
 };
 

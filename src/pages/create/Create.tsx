@@ -1,12 +1,12 @@
 import React from "react";
 import { appState, hooks, Network, ReefSigner } from "@reef-defi/react-lib";
-import { PaymentSplitterComponent } from "./PaymentSplitterComponent";
+import { CreateComponent } from "./CreateComponent";
 
-export const PaymentSplitter = (): JSX.Element => {
+export const Create = (): JSX.Element => {
     const selectedSigner: ReefSigner | undefined = hooks.useObservableState(
         appState.selectedSigner$
     );
     const network: Network | undefined = hooks.useObservableState(appState.selectedNetworkSubj);
 
-    return <>{network && <PaymentSplitterComponent signer={selectedSigner} network={network} />}</>;
+    return <>{network && <CreateComponent signer={selectedSigner} network={network} />}</>;
 };

@@ -3,13 +3,11 @@ import { Components, appState, hooks, ReefSigner, Network } from "@reef-defi/rea
 import "./Nav.css";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import { saveSignerLocalPointer } from "../store/internalStore";
-import { ReefLogo } from "./Icons";
-import { CREATE_ERC20_TOKEN_URL, DASHBOARD_URL, INTERACT_URL, PAYMENT_SPLITTER_URL } from "../urls";
+import { CREATE_URL, INTERACT_URL } from "../urls";
+import ColorSchemeToggle from "./ColorSchemeToggle";
 
 const menuItems = [
-    { title: "Dashboard", url: DASHBOARD_URL },
-    { title: "Creator", url: CREATE_ERC20_TOKEN_URL },
-    { title: "Payment splitter", url: PAYMENT_SPLITTER_URL },
+    { title: "Create", url: CREATE_URL },
     { title: "Interact", url: INTERACT_URL },
 ];
 
@@ -53,13 +51,14 @@ const Nav = ({ display }: Nav): JSX.Element => {
                             history.push("/");
                         }}
                     >
-                        <img src="/logo2.png" height="40px"></img>
+                        <img src="/logo.png" height="40px"></img>
                     </button>
                 </div>
 
                 {display && (
                     <nav className="d-flex justify-content-end d-flex-vert-center">
                         <ul className="navigation_menu-items ">{menuItemsView}</ul>
+                        <ColorSchemeToggle></ColorSchemeToggle>
                         {accounts && !!accounts.length && network && (
                             <Components.AccountSelector
                                 accounts={accounts}
