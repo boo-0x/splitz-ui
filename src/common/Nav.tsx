@@ -43,7 +43,7 @@ const Nav = ({ display }: Nav): JSX.Element => {
     return (
         <div className="nav-content navigation d-flex d-flex-space-between">
             <div className="navigation__wrapper">
-                <div className="logo-w">
+                <div>
                     <button
                         type="button"
                         className="logo-btn"

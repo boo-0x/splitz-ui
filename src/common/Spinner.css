@@ -1,0 +1,38 @@
+.splitz-spinner {
+    display: flex;
+}
+
+.splitz-spinner img {
+    height: 40px;
+    animation: rotation 3s infinite ease-in-out;
+    margin: 15px auto;
+}
+
+body:not(.dark) img.white {
+    display: none;
+}
+
+body.dark img.black {
+    display: none;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    5% {
+        transform: rotate(-20deg);
+    }
+    45% {
+        transform: rotate(200deg);
+    }
+    55% {
+        transform: rotate(160deg);
+    }
+    95% {
+        transform: rotate(380deg);
+    }
+    100% {
+        transform: rotate(359deg);
+    }
+}

@@ -1,0 +1,14 @@
+.question-tooltip {
+    display: inline;
+    margin-left: 5px;
+}
+
+.question-tooltip svg {
+    color: var(--primary);
+    font-size: 1.3rem;
+}
+
+.tooltip-message {
+    display: inline !important;
+    color: var(--fg-color) !important;
+}

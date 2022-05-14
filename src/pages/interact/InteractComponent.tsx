@@ -1,6 +1,6 @@
-import { Components, Network, ReefSigner, TokenWithAmount } from "@reef-defi/react-lib";
-import React, { useEffect, useState, useRef } from "react";
-import { Contract, BigNumber } from "ethers";
+import { Components, Network, ReefSigner, rpc } from "@reef-defi/react-lib";
+import React, { useEffect, useState } from "react";
+import { Contract, utils } from "ethers";
 import { metadataDeploy } from "../create/paymentSplitterDeployData";
 import { useHistory, useParams } from "react-router-dom";
 import { INTERACT_URL } from "../../urls";
@@ -9,21 +9,20 @@ import {
     getErc20Storage,
     removeErc20FromStorage,
 } from "../../store/internalStore";
-import SelectToken from "@reef-defi/react-lib/dist/components/SelectToken";
+import { notify } from "../../utils/utils";
+import { ERC20 } from "../../erc20";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DownloadForOfflineIcon from "@mui/icons-material/DownloadForOffline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import { TokenAmountFieldMax } from "@reef-defi/react-lib/dist/components";
-import { Signer } from "crypto";
+import QuestionTooltip from "../../common/QuestionTooltip";
 
-const { Display, Card: CardModule, Modal, Label } = Components;
+const { Display, Card: CardModule, Modal } = Components;
 const { Margin } = Display;
 const { Card } = CardModule;
-const { OpenModalButton, default: ConfirmationModal, ModalFooter, ModalBody } = Modal;
-const { ConfirmLabel } = Label;
+const { OpenModalButton, default: ConfirmationModal } = Modal;
 
 interface InteractComponent {
     signer: ReefSigner | undefined;
@@ -35,83 +34,76 @@ interface Payee {
     shares: number;
 }
 
-interface ERC20 {
-    address: string;
-    ticker: string;
-    available: number;
-    logoSrc: string;
+function noSharesError(error: Error): boolean {
+    return error.message.includes("PaymentSplitter: account has no shares");
 }
 
-const CONTRACT_ADDRESS = "0x65cF551f08F0C7B60b92F07A3E1521D8975a8aeC"; // "0x61f5e2531C3f1F87bF2a79C51D8247D54Ea233B1";
-const MOCK_TOKEN_2 = "0xaf5F0189542c1fE44fF10D7dc07359e57831179A";
-
-const ERC20_LIST: ERC20[] = [
-    {
-        address: "0xcd32473d48204c91994b0A5A32647e538e110fF4",
-        ticker: "MOCK1",
-        available: 110,
-        logoSrc: "./img/token-icons/token-icon-0.png",
-    },
-    {
-        address: "0xaf5F0189542c1fE44fF10D7dc07359e57831179A",
-        ticker: "MOCK2",
-        available: 110,
-        logoSrc: "./img/token-icons/token-icon-1.png",
-    },
-    {
-        address: "0x111111111111aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        ticker: "DUMMY",
-        available: 220,
-        logoSrc: "",
-    },
-];
-
 export const InteractComponent = ({ signer, network }: InteractComponent): JSX.Element => {
-    const [payees, setPayees] = useState<Payee[]>();
-    const [availableReef, setAvailableReef] = useState<number>();
+    const [payees, setPayees] = useState<Payee[]>([]);
+    const [availableReef, setAvailableReef] = useState<number>(0);
     const [contract, setContract] = useState<Contract>();
     const [withdrawFrom, setWithdrawFrom] = useState<string>("");
+    const [withdrawFromError, setWithdrawFromError] = useState<boolean>(false);
     const [searchAddress, setSearchAddress] = useState<string>("");
-    const [erc20List, setERC20List] = useState<ERC20[]>();
+    const [searchAddressError, setSearchAddressError] = useState<boolean>(false);
+    const [erc20List, setERC20List] = useState<ERC20[]>([]);
     const [erc20Address, setErc20Address] = useState<string>("");
-    const history = useHistory();
+    const [erc20AddressError, setErc20AddressError] = useState<boolean>(false);
+    const [openModalBtn, setOpenModalBtn] = useState<any>();
+    const [evmAddress, setEvmAddress] = useState<string>("");
     const { contractAddress } = useParams<{ contractAddress: string }>();
-    let openModalBtn: any;
+    const history = useHistory();
 
     useEffect(() => {
         setPayees([]);
         setAvailableReef(0);
         setContract(undefined);
-        setERC20List(ERC20_LIST);
+        setSearchAddress("");
+        console.log("contractAddress", contractAddress);
     }, [contractAddress]);
 
     useEffect(() => {
-        if (signer && network && contractAddress) {
+        if (signer && signer.evmAddress !== evmAddress) {
+            setEvmAddress(signer.evmAddress);
+        }
+    }, [signer]);
+
+    useEffect(() => {
+        if (evmAddress && evmAddress != "" && network && contractAddress) {
             init();
         }
-    }, [signer, network, contractAddress]);
+    }, [evmAddress, network, contractAddress]);
 
-    // let token: TokenWithAmount = {
-    //     name: "REEF",
-    //     address: "0x0000000000000000000000000000000001000000",
-    //     iconUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/6951.png",
-    //     balance: BigNumber.from(0),
-    //     decimals: 18,
-    //     symbol: "REEF",
-    //     amount: "",
-    //     isEmpty: false,
-    //     price: 0,
-    // };
+    useEffect(() => {
+        setWithdrawFromError(withdrawFrom != "" && !utils.isAddress(withdrawFrom));
+    }, [withdrawFrom]);
 
-    // let tokens = [token];
+    useEffect(() => {
+        setSearchAddressError(searchAddress != "" && !utils.isAddress(searchAddress));
+    }, [searchAddress]);
+
+    useEffect(() => {
+        setErc20AddressError(erc20Address != "" && !utils.isAddress(erc20Address));
+        const btn = document.querySelector(
+            "#addErc20ModalToggle .btn-reef"
+        ) as HTMLButtonElement | null;
+        if (btn !== null) {
+            btn.disabled = !utils.isAddress(erc20Address);
+        }
+    }, [erc20Address]);
 
     async function init(): Promise<void> {
-        if (!signer || !network) {
-            alert("!signer || !network");
+        if (!signer) {
+            notify("Signer not found.", "error");
+            return;
+        }
+        if (!network) {
+            notify("Not connected to Reef network.", "error");
             return;
         }
 
         const newContract = new Contract(contractAddress, metadataDeploy.abi, signer.signer);
+        // TODO check if it is payment splitter
         setContract(newContract);
 
         try {
@@ -122,43 +114,106 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             });
             setPayees(mappedPayees);
         } catch (err: any) {
-            console.log(err);
+            console.log("Error setting payees:", err);
         }
 
         try {
-            const res: any = await newContract.available(signer.evmAddress);
-            setAvailableReef(Number(res) / 1e18);
+            const availableReefRes: any = await newContract.available(evmAddress);
+            setAvailableReef(Number(availableReefRes) / 1e18);
         } catch (err: any) {
-            console.log(err);
+            if (!noSharesError(err)) {
+                console.log("Error setting available REEF:", err);
+            }
         }
 
-        console.log("getErc20Storage()", getErc20Storage());
-
-        getErc20Storage().forEach(async (address: string) => {
+        const updatedErc20List: ERC20[] = getErc20Storage();
+        for (const erc20 of updatedErc20List) {
             try {
-                const res: any = await newContract.availableERC20(address, signer.evmAddress);
-                if (Number(res)) {
-                    const newErc20: ERC20 = {
-                        address: address,
-                        ticker: "TODO",
-                        available: Number(res) / 1e18,
-                        logoSrc: "",
-                    };
-                    setERC20List([...(erc20List || []), newErc20]);
-                }
+                const available: any = await newContract.availableERC20(erc20.address, evmAddress);
+                erc20.available = Number(available) / 1e18;
             } catch (err: any) {
-                console.log(err);
+                if (!noSharesError(err)) {
+                    console.log("Error getting ERC20 balance:", err);
+                }
+                erc20.available = 0;
             }
-        });
+        }
+        setERC20List(updatedErc20List);
     }
 
-    async function execute(funcName: string, args: any[]) {
+    async function withdrawFromContract(addressFrom: string) {
         if (!contract) {
-            alert("!contract");
+            notify("Contract not found.", "error");
             return;
         }
 
-        const res: any = await contract[funcName](...args);
+        try {
+            await contract.withdrawFromContract(addressFrom);
+            notify("Amount withdrawn from contract to Payment Splitter.");
+            setWithdrawFrom("");
+        } catch (err: any) {
+            notify("Error withdrawing from contract to Payment Splitter.", "error");
+            console.log("Error withdrawing from contract", err);
+        }
+    }
+
+    async function updateAvailableReef() {
+        if (!contract) {
+            notify("Contract not found.", "error");
+            return;
+        }
+
+        try {
+            const availableReefRes: any = await contract.available(evmAddress);
+            setAvailableReef(Number(availableReefRes) / 1e18);
+        } catch (err: any) {
+            if (!noSharesError(err)) {
+                console.log("Error setting available REEF:", err);
+            }
+        }
+    }
+
+    async function updateAvalilableErc20(erc20: ERC20) {
+        if (!contract) {
+            notify("Contract not found.", "error");
+            return;
+        }
+
+        try {
+            const available: any = await contract.availableERC20(erc20.address, evmAddress);
+            erc20.available = Number(available) / 1e18;
+        } catch (err: any) {
+            if (!noSharesError(err)) {
+                console.log("Error getting ERC20 balance:", err);
+            }
+            erc20.available = 0;
+        }
+    }
+
+    async function releaseReef() {
+        if (!contract) {
+            notify("Contract not found.", "error");
+            return;
+        }
+
+        try {
+            await contract.release(evmAddress);
+        } catch (err: any) {
+            console.log("Error withdrawing REEF from Payment Splitter:", err);
+        }
+    }
+
+    async function releaseErc20(erc20Address: string) {
+        if (!contract) {
+            notify("Contract not found.", "error");
+            return;
+        }
+
+        try {
+            await contract.releaseERC20(erc20Address, evmAddress);
+        } catch (err: any) {
+            console.log("Error withdrawing REEF from Payment Splitter:", err);
+        }
     }
 
     function search(address: string) {
@@ -166,43 +221,51 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
     }
 
     async function addErc20(address: string) {
-        if (!contract || !signer) {
-            alert("!contract || !signer");
+        if (!signer) {
+            notify("Signer not found.", "error");
+            return;
+        }
+        if (!contract) {
+            notify("Contract not found.", "error");
+            return;
+        }
+        // TODO
+        utils.isAddress(address);
+
+        setErc20Address("");
+
+        const promisedToken = await rpc.loadToken(address, signer.signer);
+        if (!promisedToken) {
+            notify("ERC20 token not found.", "error");
             return;
         }
 
-        console.log("getErc20Storage()", getErc20Storage());
+        let erc20: ERC20 = {
+            address: address,
+            ticker: promisedToken.symbol,
+            logoSrc: promisedToken.iconUrl,
+        };
+        addErc20ToStorage(erc20);
 
         try {
-            addErc20ToStorage(address);
-            const res: any = await contract.availableERC20(address, signer.evmAddress);
-            if (Number(res)) {
-                const newErc20: ERC20 = {
-                    address: address,
-                    ticker: "TODO",
-                    available: Number(res) / 1e18,
-                    logoSrc: "",
-                };
-                const updatedErc20List = [...(erc20List || [])];
-                const index = updatedErc20List.findIndex((erc20) => erc20.address === address);
-                if (index === -1) {
-                    updatedErc20List.push(newErc20);
-                    setERC20List(updatedErc20List);
-                }
-                console.log("getErc20Storage()", getErc20Storage());
-            }
+            const availableErc20Res: any = await contract.availableERC20(address, evmAddress);
+            erc20.available = Number(availableErc20Res) / 1e18;
         } catch (err: any) {
-            console.log(err);
+            if (!noSharesError(err)) {
+                console.log("Error adding ERC20 token:", err);
+            }
+            erc20.available = 0;
+        }
+
+        const updatedErc20List = [...(erc20List || [])];
+        const index = updatedErc20List.findIndex((erc20) => erc20.address === address);
+        if (index === -1) {
+            updatedErc20List.push(erc20);
+            setERC20List(updatedErc20List);
         }
     }
 
     async function removeErc20(address: string) {
-        if (!contract || !signer) {
-            alert("!contract || !signer");
-            return;
-        }
-
-        console.log("getErc20Storage()", getErc20Storage());
         const updatedErc20List = [...(erc20List || [])];
         const index = updatedErc20List.findIndex((erc20) => erc20.address === address);
         if (index > -1) {
@@ -210,156 +273,177 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             setERC20List(updatedErc20List);
             removeErc20FromStorage(address);
         }
-        console.log("getErc20Storage()", getErc20Storage());
     }
 
     return (
         <div className="margin-auto">
-            <div className="search">
-                <Components.Input.Input
-                    value={searchAddress}
-                    onChange={setSearchAddress}
-                    className="form-control col-xl"
-                    placeholder="Contract address"
-                />
-                <div className="col-md">
-                    <Components.Button.Button
-                        onClick={() => {
-                            search(searchAddress);
-                        }}
-                    >
-                        Search
-                    </Components.Button.Button>
-                </div>
-            </div>
+            <div className="title">Interact with Splitter</div>
 
-            <Margin size="3"></Margin>
+            <div className="margin-auto fit-content">
+                {contractAddress && (
+                    <Card>
+                        <div className="bold">
+                            <div className="col-xl">Contract address</div>
+                        </div>
+                        <div>
+                            <div className="col-xl">{contractAddress}</div>
+                        </div>
 
-            <Card>
-                {payees?.length && (
-                    <div className="header-row">
-                        <div className="col-xl">Address</div>
-                        <div className="col-md">%</div>
+                        {payees && payees.length > 0 && (
+                            <div className="bold">
+                                <div className="col-xl">Owners</div>
+                                <div className="col-md">%</div>
+                            </div>
+                        )}
+                        {payees?.map((payee: Payee, i: number) => (
+                            <div key={i}>
+                                <div className="col-xl">{payee.address}</div>
+                                <div className="col-md">{payee.shares}%</div>
+                            </div>
+                        ))}
+                    </Card>
+                )}
+
+                <Margin size="3"></Margin>
+
+                {contract && (
+                    <div>
+                        <Card>
+                            <div>
+                                <div className="offset-sm col-md">
+                                    <img src="./img/reef.png" className="token-logo" />
+                                    REEF
+                                </div>
+                                <div className="col-md text-align-right">{availableReef}</div>
+                                <div className="col-sm primary">
+                                    <IconButton
+                                        onClick={() => {
+                                            updateAvailableReef();
+                                        }}
+                                    >
+                                        <RefreshIcon></RefreshIcon>
+                                    </IconButton>
+                                </div>
+                                <div className="col-sm primary">
+                                    {availableReef > 0 && (
+                                        <IconButton
+                                            onClick={() => {
+                                                releaseReef();
+                                            }}
+                                        >
+                                            <DownloadForOfflineIcon></DownloadForOfflineIcon>
+                                        </IconButton>
+                                    )}
+                                </div>
+                            </div>
+
+                            {erc20List?.map((erc20: ERC20, i: number) => (
+                                <div key={i}>
+                                    <div className="col-sm secondary">
+                                        <IconButton
+                                            onClick={() => {
+                                                removeErc20(erc20.address);
+                                            }}
+                                        >
+                                            <HighlightOffIcon></HighlightOffIcon>
+                                        </IconButton>
+                                    </div>
+                                    <div className="col-md">
+                                        {erc20.logoSrc && erc20.logoSrc != "" ? (
+                                            <img src={erc20.logoSrc} className="token-logo" />
+                                        ) : (
+                                            <HelpOutlineIcon className="token-logo"></HelpOutlineIcon>
+                                        )}
+                                        {erc20.ticker}
+                                    </div>
+                                    <div className="col-md text-align-right">{erc20.available}</div>
+                                    <div className="col-sm primary">
+                                        <IconButton
+                                            onClick={() => {
+                                                updateAvalilableErc20(erc20);
+                                            }}
+                                        >
+                                            <RefreshIcon></RefreshIcon>
+                                        </IconButton>
+                                    </div>
+                                    <div className="col-sm primary">
+                                        {erc20.available != undefined && erc20.available > 0 && (
+                                            <IconButton
+                                                onClick={() => {
+                                                    releaseErc20(erc20.address);
+                                                }}
+                                            >
+                                                <DownloadForOfflineIcon></DownloadForOfflineIcon>
+                                            </IconButton>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                            <div className="col-sm primary">
+                                <OpenModalButton id="addErc20ModalToggle" className="d-none">
+                                    <span ref={(button) => setOpenModalBtn(button)}></span>
+                                </OpenModalButton>
+                                <IconButton onClick={() => openModalBtn.click()}>
+                                    <AddCircleOutlineIcon></AddCircleOutlineIcon>
+                                </IconButton>
+                            </div>
+                        </Card>
+
+                        <Margin size="3"></Margin>
+
+                        <Card>
+                            <div className="sub-title">
+                                Withdraw REEF from contract
+                                <QuestionTooltip id="withdrawFromContract">
+                                    If the Payment Splitter is entitled to withdraw <br />
+                                    REEF from a contract that exposes a <b>withdraw()</b> <br />
+                                    function you can withdraw it from here
+                                </QuestionTooltip>
+                            </div>
+
+                            <Components.Input.Input
+                                value={withdrawFrom}
+                                onChange={setWithdrawFrom}
+                                className={`form-control col-xl ${
+                                    withdrawFromError ? "error" : ""
+                                }`}
+                                placeholder="Contract address"
+                            />
+                            <div className="col-md">
+                                <Components.Button.Button
+                                    onClick={() => {
+                                        withdrawFromContract(withdrawFrom);
+                                    }}
+                                    disabled={withdrawFromError || withdrawFrom == ""}
+                                >
+                                    Withdraw
+                                </Components.Button.Button>
+                            </div>
+                        </Card>
                     </div>
                 )}
-                {payees?.map((payee: Payee, i: number) => (
-                    <div key={i}>
-                        <div className="col-xl">{payee.address}</div>
-                        <div className="col-md">{payee.shares}%</div>
-                    </div>
-                ))}
-            </Card>
 
-            <Margin size="3"></Margin>
+                <Margin size="3"></Margin>
 
-            <Card>
-                <div>
-                    <div className="offset-sm col-md">
-                        <img src="./img/reef.png" className="token-logo" />
-                        REEF
-                    </div>
-                    <div className="col-md text-align-right">{availableReef}</div>
-                    <div className="col-sm primary">
-                        <IconButton
-                            onClick={() => {
-                                execute("available", [signer?.evmAddress]);
-                            }}
-                        >
-                            <RefreshIcon></RefreshIcon>
-                        </IconButton>
-                    </div>
-                    <div className="col-sm primary">
-                        <IconButton
-                            onClick={() => {
-                                execute("release", [signer?.evmAddress]);
-                            }}
-                        >
-                            <DownloadForOfflineIcon></DownloadForOfflineIcon>
-                        </IconButton>
-                    </div>
-                </div>
-                {/* <div className="withdraw">
+                <div className="search">
                     <Components.Input.Input
-                        value={withdrawFrom}
-                        onChange={setWithdrawFrom}
-                        className="w-50 fs-5"
-                        placeholder="Contract address"
+                        value={searchAddress}
+                        onChange={setSearchAddress}
+                        className={`form-control col-xl ${searchAddressError ? "error" : ""}`}
+                        placeholder="Payment Splitter contract address"
                     />
-                    <Components.Button.Button
-                        onClick={() => {
-                            execute("withdrawFromContract", [withdrawFrom]);
-                        }}
-                    >
-                        Withdraw from contract
-                    </Components.Button.Button>
-                </div> */}
-                {erc20List
-                    ?.filter((erc20: ERC20) => erc20.available)
-                    .map((erc20: ERC20, i: number) => (
-                        <div key={i}>
-                            <div className="col-sm secondary">
-                                <IconButton
-                                    onClick={() => {
-                                        removeErc20(erc20.address);
-                                    }}
-                                >
-                                    <HighlightOffIcon></HighlightOffIcon>
-                                </IconButton>
-                            </div>
-                            <div className="col-md">
-                                {erc20.logoSrc != "" ? (
-                                    <img src={erc20.logoSrc} className="token-logo" />
-                                ) : (
-                                    <HelpOutlineIcon className="token-logo"></HelpOutlineIcon>
-                                )}
-                                {erc20.ticker}
-                            </div>
-                            <div className="col-md text-align-right">{erc20.available}</div>
-                            <div className="col-sm primary">
-                                <IconButton
-                                    onClick={() => {
-                                        execute("availableERC20", [
-                                            erc20.address,
-                                            signer?.evmAddress,
-                                        ]);
-                                    }}
-                                >
-                                    <RefreshIcon></RefreshIcon>
-                                </IconButton>
-                            </div>
-                            <div className="col-sm primary">
-                                <IconButton
-                                    onClick={() => {
-                                        execute("releaseERC20", [
-                                            erc20.address,
-                                            signer?.evmAddress,
-                                        ]);
-                                    }}
-                                >
-                                    <DownloadForOfflineIcon></DownloadForOfflineIcon>
-                                </IconButton>
-                            </div>
-                        </div>
-                    ))}
-                <div className="col-sm primary">
-                    <OpenModalButton id="addErc20ModalToggle" className="d-none">
-                        <span ref={(button) => (openModalBtn = button)}></span>
-                    </OpenModalButton>
-                    <IconButton onClick={() => openModalBtn.click()}>
-                        <AddCircleOutlineIcon></AddCircleOutlineIcon>
-                    </IconButton>
+                    <div className="col-md">
+                        <Components.Button.Button
+                            onClick={() => {
+                                search(searchAddress);
+                            }}
+                            disabled={searchAddressError || searchAddress == ""}
+                        >
+                            Search Payment Splitter
+                        </Components.Button.Button>
+                    </div>
                 </div>
-                {/* <SelectToken
-                    id="sel"
-                    tokens={tokens}
-                    signer={signer as ReefSigner}
-                    iconUrl=""
-                    selectedTokenName="MOCK"
-                    onTokenSelect={() => alert("selected")}
-                    onAddressChange={() => new Promise(() => alert("promise"))}
-                    hideCommonBaseView={false}
-                /> */}
-            </Card>
+            </div>
 
             <ConfirmationModal
                 id="addErc20ModalToggle"
@@ -370,7 +454,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                 <Components.Input.Input
                     value={erc20Address}
                     onChange={setErc20Address}
-                    className="col-xl"
+                    className={`form-control col-xl ${erc20AddressError ? "error" : ""}`}
                     placeholder="Address"
                 />
             </ConfirmationModal>

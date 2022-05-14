@@ -8,10 +8,16 @@ import {
     contractsDeploy,
     metadataArtifactDeploy,
 } from "./paymentSplitterDeployData";
+import { notify } from "../../utils/utils";
 import IconButton from "@mui/material/IconButton";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
+import Spinner from "../../common/Spinner";
 import "./Create.css";
+
+const { Modal } = Components;
+const { OpenModalButton, default: ConfirmationModal } = Modal;
 
 interface CreateComponent {
     signer: ReefSigner | undefined;
@@ -22,22 +28,114 @@ interface CreateComponent {
 interface Payee {
     address: string;
     shares: number;
+    addressError?: boolean;
+    sharesError?: boolean;
+}
+
+interface Progress {
+    loading: boolean;
+    msg?: string;
 }
 
 export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Element => {
     const [payees, setPayees] = useState<Payee[]>();
     const [totalShares, setTotalShares] = useState<number>();
     const [contractAddress, setContractAddress] = useState<string>();
+    const [progress, setProgress] = useState<Progress>({ loading: false });
+    const [openModalBtn, setOpenModalBtn] = useState<any>();
 
     useEffect(() => {
-        addPayee({ address: "", shares: 0 });
-    }, []);
+        if (!payees?.length) {
+            addPayee({ address: signer ? signer.evmAddress : "", shares: 0 });
+        } else if (payees[0].address === "") {
+            addressChange(signer ? signer.evmAddress : "", 0);
+        }
+    }, [signer]);
 
-    async function verify(
-        contractAddress: string,
-        args: string,
-        network: Network
-    ): Promise<boolean> {
+    async function createSplitter(
+        signer?: ReefSigner,
+        network?: Network,
+        payees?: Payee[]
+    ): Promise<void> {
+        if (!signer) {
+            notify("Signer not found.", "error");
+            return;
+        }
+
+        if (!network) {
+            notify("Not connected to Reef network.", "error");
+            return;
+        }
+
+        const addresses: string[] = [];
+        const shares: number[] = [];
+        let updatedPayees = [...(payees || [])];
+        let hasErrors = false;
+
+        updatedPayees.forEach((payee: Payee, index: number) => {
+            if (!utils.isAddress(payee.address)) {
+                payee.addressError = true;
+                hasErrors = true;
+            }
+            addresses.push(payee.address);
+
+            if (!payee.shares) {
+                payee.sharesError = true;
+                hasErrors = true;
+            }
+            shares.push(payee.shares);
+        });
+
+        if (hasErrors) {
+            setPayees(updatedPayees);
+            return;
+        }
+
+        const args = [addresses, shares];
+        const deployAbi = metadataDeploy.abi;
+        const deployBytecode = metadataDeploy.bytecode;
+        const paymentSplitterContract = new ContractFactory(
+            deployAbi,
+            deployBytecode,
+            signer?.signer
+        );
+        let contract: Contract | undefined;
+
+        setProgress({ loading: true, msg: "Creating contract..." });
+
+        ///////////////////////// TODO
+        setTimeout(() => {
+            setContractAddress("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            setProgress({ loading: true, msg: "Validating contract..." });
+        }, 2000);
+
+        setTimeout(() => {
+            setProgress({ loading: false });
+            notify("Error verifying contract.", "error");
+            openModalBtn.click();
+        }, 4000);
+        ///////////////////////// TODO
+
+        // try {
+        //     contract = await paymentSplitterContract.deploy(...args);
+        // } catch (err: any) {
+        //     setProgress({ loading: true, msg: "Validating contract..." });
+        //     console.log("Error deploying contract:", err);
+        //     return;
+        // }
+        // setContractAddress(contract.address);
+
+        // try {
+        //     await verify(contract.address, JSON.stringify(args), network);
+        // } catch (err) {
+        //     setProgress({ loading: false });
+        //     notify("Error verifying contract.", "error");
+        //     console.log("Error verifying contract:", err);
+        // }
+        // setProgress({ loading: false });
+    }
+
+    async function verify(contractAddress: string, args: string, network: Network): Promise<void> {
         const { compilationTarget } = metadataArtifactDeploy.settings;
         const compTargetFileName = Object.keys(compilationTarget)[0];
         const verified = await verifyContract(
@@ -56,59 +154,9 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             args,
             network.reefscanUrl
         );
-        return verified;
-    }
 
-    async function createSplitter(
-        signer?: ReefSigner,
-        network?: Network,
-        payees?: Payee[]
-    ): Promise<void> {
-        if (!signer || !network || !payees) {
-            console.log("!signer || !network || !payees");
-            return;
-        }
-
-        const addresses: string[] = [];
-        const shares: number[] = [];
-        payees.forEach((payee: Payee) => {
-            if (!utils.isAddress(payee.address)) {
-                alert("invalid address");
-                return;
-            }
-            addresses.push(payee.address);
-            if (payee.shares <= 0) {
-                alert("invalid shares value");
-                return;
-            }
-            shares.push(payee.shares);
-        });
-
-        const args = [addresses, shares];
-        console.log(args);
-        const deployAbi = metadataDeploy.abi;
-        const deployBytecode = metadataDeploy.bytecode;
-        const paymentSplitterContract = new ContractFactory(
-            deployAbi,
-            deployBytecode,
-            signer?.signer
-        );
-        let contract: Contract | undefined;
-
-        try {
-            contract = await paymentSplitterContract.deploy(...args);
-        } catch (err: any) {
-            console.log("deploy err=", err);
-            return;
-        }
-        console.log(`deployed to ${contract.address}`);
-        setContractAddress(contract.address);
-
-        try {
-            const verified = await verify(contract.address, JSON.stringify(args), network);
-            console.log("verified", verified);
-        } catch (err) {
-            console.log("verify err=", err);
+        if (!verified) {
+            notify("Error verifying contract.", "error");
         }
     }
 
@@ -130,6 +178,7 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
     function addressChange(value: string, index: number) {
         let updatedPayees = [...(payees || [])];
         updatedPayees[index].address = value;
+        updatedPayees[index].addressError = !utils.isAddress(value);
         setPayees(updatedPayees);
     }
 
@@ -137,6 +186,7 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         const numValue = Number(value) < 0 ? 0 : Number(value);
         let updatedPayees = [...(payees || [])];
         updatedPayees[index].shares = numValue;
+        updatedPayees[index].sharesError = numValue == 0;
         setPayees(updatedPayees);
         setTotalShares(
             updatedPayees.reduce((acum, payee) => {
@@ -147,81 +197,101 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
 
     return (
         <div className="margin-auto">
-            {payees?.length && (
-                <div className="header-row">
-                    <div className="offset-sm col-xl">Address</div>
-                    <div className="col-md">Shares</div>
-                </div>
-            )}
-
-            {payees?.map((payee: Payee, i: number) => (
-                <div key={i}>
-                    <div className="col-sm secondary">
-                        {payees.length > 1 && (
-                            <IconButton
-                                onClick={() => {
-                                    deletePayee(i);
-                                }}
-                            >
-                                <HighlightOffIcon></HighlightOffIcon>
-                            </IconButton>
-                        )}
+            <div className="title">Create Splitter</div>
+            <div className="margin-auto fit-content">
+                {payees?.length && (
+                    <div className="header-row">
+                        <div className="offset-sm col-xl">Address</div>
+                        <div className="col-md">Shares</div>
                     </div>
+                )}
 
-                    <Components.Input.Input
-                        value={payee.address}
-                        onChange={(val) => addressChange(val, i)}
-                        className="form-control col-xl"
-                        placeholder="Address"
-                    />
+                {payees?.map((payee: Payee, i: number) => (
+                    <div key={i} className="mb-1">
+                        <div className="col-sm secondary">
+                            {payees.length > 1 && (
+                                <IconButton
+                                    onClick={() => {
+                                        deletePayee(i);
+                                    }}
+                                >
+                                    <HighlightOffIcon></HighlightOffIcon>
+                                </IconButton>
+                            )}
+                        </div>
 
-                    <Components.Input.NumberInput
-                        value={payee.shares.toString()}
-                        onChange={(val) => sharesChange(val, i)}
-                        className="form-control col-md"
-                        placeholder="Shares"
-                    />
+                        <Components.Input.Input
+                            value={payee.address}
+                            onChange={(val) => addressChange(val, i)}
+                            className={`form-control col-xl ${payee.addressError ? "error" : ""}`}
+                            placeholder="Enter EVM address"
+                        />
 
-                    <div className="col-lg">
-                        {totalShares && payee.shares && (
-                            <span>{((payee.shares / totalShares) * 100).toFixed(2)} %</span>
-                        )}
+                        <Components.Input.NumberInput
+                            value={payee.shares.toString()}
+                            onChange={(val) => sharesChange(val, i)}
+                            className={`form-control col-md ${payee.sharesError ? "error" : ""}`}
+                            placeholder="Shares"
+                        />
+
+                        <div className="col-lg">
+                            {totalShares != undefined &&
+                                payee.shares != undefined &&
+                                payee.shares != 0 && (
+                                    <span>{((payee.shares / totalShares) * 100).toFixed(2)} %</span>
+                                )}
+                        </div>
                     </div>
-                </div>
-            ))}
+                ))}
 
-            <div className="footer-row">
-                <div className="col-sm primary">
-                    <IconButton
+                <div className="footer-row">
+                    <div className="col-sm primary">
+                        <IconButton
+                            onClick={() => {
+                                addPayee({ address: "", shares: 0 });
+                            }}
+                        >
+                            <AddCircleOutlineIcon></AddCircleOutlineIcon>
+                        </IconButton>
+                    </div>
+                    <div className="col-xl text-align-right">Total shares:</div>
+                    <div className="col-md">{totalShares}</div>
+                </div>
+
+                <div className="center-content">
+                    <Components.Button.Button
                         onClick={() => {
-                            addPayee({ address: "", shares: 0 });
+                            createSplitter(signer, network, payees);
                         }}
+                        disabled={progress.loading}
                     >
-                        <AddCircleOutlineIcon></AddCircleOutlineIcon>
-                    </IconButton>
+                        Create Splitter
+                    </Components.Button.Button>
                 </div>
-                <div className="col-xl text-align-right">Total shares:</div>
-                <div className="col-md">{totalShares}</div>
+
+                {progress.loading && <div className="progress-msg">{progress.msg}</div>}
+
+                <Spinner display={progress.loading}></Spinner>
             </div>
 
-            <div className="center-content">
-                <Components.Button.Button
-                    onClick={() => {
-                        createSplitter(signer, network, payees);
-                    }}
-                >
-                    Create Splitter
-                </Components.Button.Button>
-            </div>
-
-            {contractAddress && (
-                <div>
-                    Contract address: {contractAddress}
-                    <CopyToClipboard text={contractAddress}>
-                        <span>copy</span>
-                    </CopyToClipboard>
-                </div>
-            )}
+            <OpenModalButton id="contractCreatedModalToggle" className="d-none">
+                <span ref={(button) => setOpenModalBtn(button)}></span>
+            </OpenModalButton>
+            <ConfirmationModal
+                id="contractCreatedModalToggle"
+                title="Payment Splitter created"
+                confirmBtnLabel="OK"
+                confirmFun={() => {}}
+            >
+                {contractAddress && (
+                    <div>
+                        {contractAddress}
+                        <CopyToClipboard text={contractAddress}>
+                            <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
+                        </CopyToClipboard>
+                    </div>
+                )}
+            </ConfirmationModal>
         </div>
     );
 };
