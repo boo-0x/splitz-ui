@@ -1,20 +1,17 @@
 import { Components, Network, ReefSigner, utils as reefUtils } from "@reef-defi/react-lib";
 import React, { useEffect, useState } from "react";
 import { Contract, ContractFactory, utils } from "ethers";
-import { verifyContract } from "../../utils/contract";
+import { verifySplitzContract } from "../../utils/contract";
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import {
-    metadataDeploy,
-    contractsDeploy,
-    metadataArtifactDeploy,
-} from "./paymentSplitterDeployData";
+import { metadataDeploy } from "../../utils/deployData";
 import { notify } from "../../utils/utils";
 import IconButton from "@mui/material/IconButton";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import Spinner from "../../common/Spinner";
-import "./Create.css";
+import { Payee } from "../../model/payee";
+import { Progress } from "../../model/progress";
 
 const { Modal } = Components;
 const { OpenModalButton, default: ConfirmationModal } = Modal;
@@ -23,18 +20,6 @@ interface CreateComponent {
     signer: ReefSigner | undefined;
     network: Network;
     onTxUpdate?: reefUtils.TxStatusHandler;
-}
-
-interface Payee {
-    address: string;
-    shares: number;
-    addressError?: boolean;
-    sharesError?: boolean;
-}
-
-interface Progress {
-    loading: boolean;
-    msg?: string;
 }
 
 export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Element => {
@@ -52,7 +37,7 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         }
     }, [signer]);
 
-    async function createSplitter(
+    async function createSplitzer(
         signer?: ReefSigner,
         network?: Network,
         payees?: Payee[]
@@ -94,19 +79,15 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         const args = [addresses, shares];
         const deployAbi = metadataDeploy.abi;
         const deployBytecode = metadataDeploy.bytecode;
-        const paymentSplitterContract = new ContractFactory(
-            deployAbi,
-            deployBytecode,
-            signer?.signer
-        );
+        const splitzContract = new ContractFactory(deployAbi, deployBytecode, signer?.signer);
         let contract: Contract | undefined;
 
         setProgress({ loading: true, msg: "Creating contract..." });
 
-        ///////////////////////// TODO
+        ///////////////////////// TODO remove
         setTimeout(() => {
             setContractAddress("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-            setProgress({ loading: true, msg: "Validating contract..." });
+            setProgress({ loading: true, msg: "Verifying contract..." });
         }, 2000);
 
         setTimeout(() => {
@@ -117,47 +98,30 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         ///////////////////////// TODO
 
         // try {
-        //     contract = await paymentSplitterContract.deploy(...args);
+        //     contract = await splitzContract.deploy(...args);
         // } catch (err: any) {
-        //     setProgress({ loading: true, msg: "Validating contract..." });
+        //     notify("Error deploying contract.", "error");
         //     console.log("Error deploying contract:", err);
+        //     setProgress({ loading: false });
         //     return;
         // }
         // setContractAddress(contract.address);
 
+        // setProgress({ loading: true, msg: "Verifying contract..." });
         // try {
-        //     await verify(contract.address, JSON.stringify(args), network);
+        // const verified = await verifySplitzContract(
+        //     contract.address,
+        //     JSON.stringify(args),
+        //     network
+        // );
+        // if (!verified) {
+        //     notify("Error verifying contract.", "error");
+        // }
         // } catch (err) {
-        //     setProgress({ loading: false });
         //     notify("Error verifying contract.", "error");
         //     console.log("Error verifying contract:", err);
         // }
         // setProgress({ loading: false });
-    }
-
-    async function verify(contractAddress: string, args: string, network: Network): Promise<void> {
-        const { compilationTarget } = metadataArtifactDeploy.settings;
-        const compTargetFileName = Object.keys(compilationTarget)[0];
-        const verified = await verifyContract(
-            contractAddress,
-            {
-                source: JSON.stringify(contractsDeploy),
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                contractName: compilationTarget[compTargetFileName],
-                target: metadataArtifactDeploy.settings.evmVersion,
-                compilerVersion: `v${metadataArtifactDeploy.compiler.version}`,
-                optimization: metadataArtifactDeploy.settings.optimizer.enabled.toString(),
-                filename: compTargetFileName,
-                runs: metadataArtifactDeploy.settings.optimizer.runs,
-            },
-            args,
-            network.reefscanUrl
-        );
-
-        if (!verified) {
-            notify("Error verifying contract.", "error");
-        }
     }
 
     function addPayee(payee: Payee) {
@@ -197,7 +161,7 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
 
     return (
         <div className="margin-auto">
-            <div className="title">Create Splitter</div>
+            <div className="title">Create Splitzer</div>
             <div className="margin-auto fit-content">
                 {payees?.length && (
                     <div className="header-row">
@@ -261,16 +225,15 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
                 <div className="center-content">
                     <Components.Button.Button
                         onClick={() => {
-                            createSplitter(signer, network, payees);
+                            createSplitzer(signer, network, payees);
                         }}
                         disabled={progress.loading}
                     >
-                        Create Splitter
+                        Create Splitzer
                     </Components.Button.Button>
                 </div>
 
                 {progress.loading && <div className="progress-msg">{progress.msg}</div>}
-
                 <Spinner display={progress.loading}></Spinner>
             </div>
 
@@ -279,7 +242,7 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             </OpenModalButton>
             <ConfirmationModal
                 id="contractCreatedModalToggle"
-                title="Payment Splitter created"
+                title="Splitzer created"
                 confirmBtnLabel="OK"
                 confirmFun={() => {}}
             >

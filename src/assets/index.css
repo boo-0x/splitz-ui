@@ -13,7 +13,6 @@ body,
     font-weight: 400;
 }
 
-/* TODO clean shadow */
 .title {
     font-family: "Press Start 2P", cursive;
     font-size: 2.5rem;
@@ -23,10 +22,6 @@ body,
     -moz-transform: scale(1, 1.2);
     -o-transform: scale(1, 1.2);
     background: var(--bg-color);
-    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px var(--primary),
-        0 0 30px var(--primary), 0 0 40px var(--primary), 0 0 55px var(--primary);
-    text-shadow: 4px 3px 0 var(--secondary), 8px 6px 0 var(--primary);
-    text-shadow: -4px 0 0 var(--primary), 4px 0 0 var(--secondary);
     text-shadow: 4px 3px 0 var(--primary);
 }
 
@@ -57,13 +52,6 @@ body,
     padding: 50px;
 }
 
-.card {
-    border-radius: 1rem;
-    background-color: var(--bg-sec-color);
-    box-shadow: none !important;
-    border: none !important;
-}
-
 .w-100 {
     width: 100%;
 }
@@ -74,6 +62,11 @@ body,
 
 .mr-1 {
     margin-right: 1em;
+}
+
+.confirm-disabled .btn-reef {
+    pointer-events: none;
+    opacity: 0.65;
 }
 
 .d-flex {
@@ -176,6 +169,25 @@ input.form-control.error {
     text-align: center;
 }
 
+.header-row div {
+    padding-left: 10px;
+}
+
+.verify-btn {
+    position: relative !important;
+    padding-left: 0 !important;
+    padding-top: 0 !important;
+}
+
+body:not(.dark) img.logo-white {
+    display: none;
+}
+
+body.dark img.logo-black {
+    display: none;
+}
+
+/* Grid */
 .col-sm {
     display: inline-block !important;
     margin: 3px !important;
@@ -198,6 +210,10 @@ input.form-control.error {
     display: inline-block !important;
     margin: 3px !important;
     width: 400px !important;
+}
+
+.col-100 {
+    margin: 3px !important;
 }
 
 .offset-sm {
@@ -272,4 +288,12 @@ body.dark .modal-header .btn-close {
 
 .modal-content .title-text {
     font-size: 1.6em;
+}
+
+.card {
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    background-color: var(--bg-sec-color);
+    box-shadow: none !important;
+    border: none !important;
 }

@@ -2,18 +2,19 @@
     display: flex;
 }
 
+.inline {
+    display: inline;
+}
+
+.inline .splitz-spinner {
+    display: inline;
+    padding-left: 10px;
+}
+
 .splitz-spinner img {
     height: 40px;
     animation: rotation 3s infinite ease-in-out;
     margin: 15px auto;
-}
-
-body:not(.dark) img.white {
-    display: none;
-}
-
-body.dark img.black {
-    display: none;
 }
 
 @keyframes rotation {

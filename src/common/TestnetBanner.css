@@ -1,0 +1,14 @@
+.banner {
+    background-color: var(--secondary-transparent);
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100% !important;
+    height: 40px;
+}
+
+.banner svg {
+    color: var(--secondary);
+    margin-right: 5px;
+}

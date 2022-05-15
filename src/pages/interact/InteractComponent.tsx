@@ -1,7 +1,7 @@
 import { Components, Network, ReefSigner, rpc } from "@reef-defi/react-lib";
 import React, { useEffect, useState } from "react";
 import { Contract, utils } from "ethers";
-import { metadataDeploy } from "../create/paymentSplitterDeployData";
+import { metadataDeploy } from "../../utils/deployData";
 import { useHistory, useParams } from "react-router-dom";
 import { INTERACT_URL } from "../../urls";
 import {
@@ -10,17 +10,20 @@ import {
     removeErc20FromStorage,
 } from "../../store/internalStore";
 import { notify } from "../../utils/utils";
-import { ERC20 } from "../../erc20";
+import { ERC20 } from "../../model/erc20";
+import { Payee } from "../../model/payee";
+import { Progress } from "../../model/progress";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DownloadForOfflineIcon from "@mui/icons-material/DownloadForOffline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import QuestionTooltip from "../../common/QuestionTooltip";
+import Tooltip from "../../common/Tooltip";
+import { isContrIndexed, verifySplitzContract } from "../../utils/contract";
+import Spinner from "../../common/Spinner";
 
-const { Display, Card: CardModule, Modal } = Components;
-const { Margin } = Display;
+const { Card: CardModule, Modal } = Components;
 const { Card } = CardModule;
 const { OpenModalButton, default: ConfirmationModal } = Modal;
 
@@ -29,13 +32,8 @@ interface InteractComponent {
     network: Network;
 }
 
-interface Payee {
-    address: string;
-    shares: number;
-}
-
 function noSharesError(error: Error): boolean {
-    return error.message.includes("PaymentSplitter: account has no shares");
+    return error.message.includes("Splitz: account has no shares");
 }
 
 export const InteractComponent = ({ signer, network }: InteractComponent): JSX.Element => {
@@ -51,6 +49,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
     const [erc20AddressError, setErc20AddressError] = useState<boolean>(false);
     const [openModalBtn, setOpenModalBtn] = useState<any>();
     const [evmAddress, setEvmAddress] = useState<string>("");
+    const [contractNotVerified, setContractNotVerified] = useState<boolean>(false);
+    const [progress, setProgress] = useState<Progress>({ loading: false });
     const { contractAddress } = useParams<{ contractAddress: string }>();
     const history = useHistory();
 
@@ -59,7 +59,6 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         setAvailableReef(0);
         setContract(undefined);
         setSearchAddress("");
-        console.log("contractAddress", contractAddress);
     }, [contractAddress]);
 
     useEffect(() => {
@@ -103,9 +102,9 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         }
 
         const newContract = new Contract(contractAddress, metadataDeploy.abi, signer.signer);
-        // TODO check if it is payment splitter
         setContract(newContract);
 
+        // Set payees (owners)
         try {
             const totalShares = Number(await newContract.totalShares());
             const payeesResp = await newContract.getPayees();
@@ -114,9 +113,18 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             });
             setPayees(mappedPayees);
         } catch (err: any) {
+            notify("Splitzer contract not found for the provided address.", "error");
             console.log("Error setting payees:", err);
+            return;
         }
 
+        // Check if contract is verified
+        // TODO implement query
+        isContrIndexed(contractAddress)
+            .then((verified: boolean) => setContractNotVerified(!verified))
+            .catch((err: any) => console.log("Error checking if contract is verified:", err));
+
+        // Set available REEF in Splitzer
         try {
             const availableReefRes: any = await newContract.available(evmAddress);
             setAvailableReef(Number(availableReefRes) / 1e18);
@@ -126,6 +134,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             }
         }
 
+        // Set available ERC20s in Splitzer
         const updatedErc20List: ERC20[] = getErc20Storage();
         for (const erc20 of updatedErc20List) {
             try {
@@ -141,6 +150,41 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         setERC20List(updatedErc20List);
     }
 
+    async function verifyContract(): Promise<void> {
+        setProgress({ loading: true });
+
+        const addresses: string[] = [];
+        const shares: number[] = [];
+        payees.forEach((payee: Payee) => {
+            addresses.push(payee.address);
+            shares.push(payee.shares);
+        });
+        const args = [addresses, shares];
+
+        try {
+            const verified = await verifySplitzContract(
+                contractAddress,
+                JSON.stringify(args),
+                network
+            );
+            if (verified) {
+                notify("Contract has been verified.");
+                setContractNotVerified(true);
+            } else {
+                notify("Error verifying contract.", "error");
+            }
+        } catch (err: any) {
+            notify("Error verifying contract.", "error");
+            console.log("Error verifying contract.", err);
+        }
+
+        setProgress({ loading: false });
+    }
+
+    function searchSplitzer(address: string) {
+        history.push(INTERACT_URL + "/" + address);
+    }
+
     async function withdrawFromContract(addressFrom: string) {
         if (!contract) {
             notify("Contract not found.", "error");
@@ -149,10 +193,10 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
 
         try {
             await contract.withdrawFromContract(addressFrom);
-            notify("Amount withdrawn from contract to Payment Splitter.");
+            notify("Amount withdrawn from contract to Splitzer.");
             setWithdrawFrom("");
         } catch (err: any) {
-            notify("Error withdrawing from contract to Payment Splitter.", "error");
+            notify("Error sending funds to Splitzer.", "error");
             console.log("Error withdrawing from contract", err);
         }
     }
@@ -199,7 +243,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         try {
             await contract.release(evmAddress);
         } catch (err: any) {
-            console.log("Error withdrawing REEF from Payment Splitter:", err);
+            console.log("Error withdrawing REEF from Splitzer:", err);
         }
     }
 
@@ -212,12 +256,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         try {
             await contract.releaseERC20(erc20Address, evmAddress);
         } catch (err: any) {
-            console.log("Error withdrawing REEF from Payment Splitter:", err);
+            console.log("Error withdrawing REEF from Splitzer:", err);
         }
-    }
-
-    function search(address: string) {
-        history.push(INTERACT_URL + "/" + address);
     }
 
     async function addErc20(address: string) {
@@ -229,9 +269,6 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             notify("Contract not found.", "error");
             return;
         }
-        // TODO
-        utils.isAddress(address);
-
         setErc20Address("");
 
         const promisedToken = await rpc.loadToken(address, signer.signer);
@@ -277,16 +314,29 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
 
     return (
         <div className="margin-auto">
-            <div className="title">Interact with Splitter</div>
+            <div className="title">Interact with Splitzer</div>
 
             <div className="margin-auto fit-content">
                 {contractAddress && (
                     <Card>
-                        <div className="bold">
-                            <div className="col-xl">Contract address</div>
-                        </div>
-                        <div>
-                            <div className="col-xl">{contractAddress}</div>
+                        <div className="bold col-100">Contract address</div>
+
+                        <div className="col-100">
+                            {contractAddress}
+                            {contractNotVerified && (
+                                <IconButton
+                                    onClick={() => {
+                                        verifyContract();
+                                    }}
+                                    className="verify-btn"
+                                >
+                                    <Tooltip id="notVerifiedTooltip" type="exclamation">
+                                        Contract not verified. Click here to verify.
+                                    </Tooltip>
+                                </IconButton>
+                            )}
+
+                            <Spinner display={progress.loading} inline={true}></Spinner>
                         </div>
 
                         {payees && payees.length > 0 && (
@@ -303,8 +353,6 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                         ))}
                     </Card>
                 )}
-
-                <Margin size="3"></Margin>
 
                 {contract && (
                     <div>
@@ -389,16 +437,15 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                             </div>
                         </Card>
 
-                        <Margin size="3"></Margin>
-
                         <Card>
                             <div className="sub-title">
                                 Withdraw REEF from contract
-                                <QuestionTooltip id="withdrawFromContract">
-                                    If the Payment Splitter is entitled to withdraw <br />
-                                    REEF from a contract that exposes a <b>withdraw()</b> <br />
+                                <Tooltip id="withdrawFromContractTooltip">
+                                    If the Splitzer is entitled to withdraw <br />
+                                    REEF from another contract that exposes a <b>withdraw()</b>{" "}
+                                    <br />
                                     function you can withdraw it from here
-                                </QuestionTooltip>
+                                </Tooltip>
                             </div>
 
                             <Components.Input.Input
@@ -423,23 +470,21 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                     </div>
                 )}
 
-                <Margin size="3"></Margin>
-
                 <div className="search">
                     <Components.Input.Input
                         value={searchAddress}
                         onChange={setSearchAddress}
                         className={`form-control col-xl ${searchAddressError ? "error" : ""}`}
-                        placeholder="Payment Splitter contract address"
+                        placeholder="Splitzer address"
                     />
                     <div className="col-md">
                         <Components.Button.Button
                             onClick={() => {
-                                search(searchAddress);
+                                searchSplitzer(searchAddress);
                             }}
                             disabled={searchAddressError || searchAddress == ""}
                         >
-                            Search Payment Splitter
+                            Search Splitzer
                         </Components.Button.Button>
                     </div>
                 </div>

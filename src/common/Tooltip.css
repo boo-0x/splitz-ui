@@ -1,14 +1,21 @@
-.question-tooltip {
+.splitz-tooltip {
     display: inline;
     margin-left: 5px;
 }
 
-.question-tooltip svg {
-    color: var(--primary);
+.splitz-tooltip svg {
     font-size: 1.3rem;
 }
 
-.tooltip-message {
+.question-tooltip svg {
+    color: var(--primary);
+}
+
+.exclamation-tooltip svg {
+    color: var(--secondary);
+}
+
+.splitz-tooltip-message {
     display: inline !important;
     color: var(--fg-color) !important;
 }

@@ -1,4 +1,4 @@
-import { ERC20 } from "../erc20";
+import { ERC20 } from "../model/erc20";
 
 const SIGNER_POINTER = "splitz-signer-pointer";
 const ERC20_TOKENS = "splitz-erc20-tokens";

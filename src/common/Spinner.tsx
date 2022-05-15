@@ -3,15 +3,16 @@ import "./Spinner.css";
 
 interface Spinner {
     display: boolean;
+    inline?: boolean;
 }
 
-const Spinner = ({ display }: Spinner): JSX.Element => {
+const Spinner = ({ display, inline = false }: Spinner): JSX.Element => {
     return (
-        <div>
+        <div className={`${inline ? "inline" : ""}`}>
             {display && (
                 <div className="splitz-spinner">
-                    <img src="/logo.png" className="black"></img>
-                    <img src="/logo_white.png" className="white"></img>
+                    <img src="/logo.png" className="logo-black"></img>
+                    <img src="/logo_white.png" className="logo-white"></img>
                 </div>
             )}
         </div>
