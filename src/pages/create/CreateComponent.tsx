@@ -12,6 +12,8 @@ import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import Spinner from "../../common/Spinner";
 import { Payee } from "../../model/payee";
 import { Progress } from "../../model/progress";
+import { useHistory, useLocation } from "react-router-dom";
+import { INTERACT_URL, TESTNET_URL } from "../../urls";
 
 const { Modal } = Components;
 const { OpenModalButton, default: ConfirmationModal } = Modal;
@@ -28,6 +30,8 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
     const [contractAddress, setContractAddress] = useState<string>();
     const [progress, setProgress] = useState<Progress>({ loading: false });
     const [openModalBtn, setOpenModalBtn] = useState<any>();
+    const isTestnet = useLocation().pathname.includes(TESTNET_URL);
+    const history = useHistory();
 
     useEffect(() => {
         if (!payees?.length) {
@@ -159,10 +163,18 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         );
     }
 
+    function navigateInteract() {
+        history.push(
+            isTestnet
+                ? TESTNET_URL + INTERACT_URL + "/" + contractAddress
+                : INTERACT_URL + "/" + contractAddress
+        );
+    }
+
     return (
-        <div className="margin-auto">
+        <div className="margin-y-auto">
             <div className="title">Create Splitzer</div>
-            <div className="margin-auto fit-content">
+            <div className="margin-y-auto fit-content">
                 {payees?.length && (
                     <div className="header-row">
                         <div className="offset-sm col-xl">Address</div>
@@ -218,7 +230,7 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
                             <AddCircleOutlineIcon></AddCircleOutlineIcon>
                         </IconButton>
                     </div>
-                    <div className="col-xl text-align-right">Total shares:</div>
+                    <div className="col-xl text-align-right bold">Total shares:</div>
                     <div className="col-md">{totalShares}</div>
                 </div>
 
@@ -243,15 +255,19 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             <ConfirmationModal
                 id="contractCreatedModalToggle"
                 title="Splitzer created"
-                confirmBtnLabel="OK"
-                confirmFun={() => {}}
+                confirmBtnLabel="Interact"
+                confirmFun={() => {
+                    navigateInteract();
+                }}
             >
                 {contractAddress && (
                     <div>
-                        {contractAddress}
-                        <CopyToClipboard text={contractAddress}>
-                            <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
-                        </CopyToClipboard>
+                        <div>
+                            {contractAddress}
+                            <CopyToClipboard text={contractAddress}>
+                                <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
+                            </CopyToClipboard>
+                        </div>
                     </div>
                 )}
             </ConfirmationModal>

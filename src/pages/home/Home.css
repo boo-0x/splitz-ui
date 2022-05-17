@@ -12,3 +12,27 @@
 .content-home {
     font-size: 1.3rem;
 }
+
+.home-summary {
+    margin-bottom: 6rem;
+}
+
+.home-section {
+    display: flex;
+    margin-bottom: 5rem;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.section-title {
+    width: 30%;
+    display: flex;
+    justify-content: center;
+}
+
+.section-content {
+    width: 70%;
+    display: flex;
+    align-items: center;
+}

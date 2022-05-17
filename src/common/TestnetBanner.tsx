@@ -5,7 +5,7 @@ import "./TestnetBanner.css";
 const TestnetBanner = (): JSX.Element => (
     <div className="banner">
         <ErrorOutlineIcon></ErrorOutlineIcon>
-        <span>Using testnet network. To use mainnet remove "/testnet" from the URL.</span>
+        <span>Connected to testnet. To use mainnet remove "/testnet" from the URL.</span>
     </div>
 );
 

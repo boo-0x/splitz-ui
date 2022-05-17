@@ -2,9 +2,10 @@
     background-color: var(--secondary-transparent);
     font-size: 1.1rem;
     display: flex;
+    position: absolute;
     justify-content: center;
     align-items: center;
-    width: 100% !important;
+    max-width: 100% !important;
     height: 40px;
 }
 

@@ -1,4 +1,6 @@
-# Splitz
+<p align="center">
+  <img src="./splitz.png" width="800" title="Splitz">
+</p>
 
 ## Development
 

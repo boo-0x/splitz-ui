@@ -2,8 +2,8 @@ import { Components, Network, ReefSigner, rpc } from "@reef-defi/react-lib";
 import React, { useEffect, useState } from "react";
 import { Contract, utils } from "ethers";
 import { metadataDeploy } from "../../utils/deployData";
-import { useHistory, useParams } from "react-router-dom";
-import { INTERACT_URL } from "../../urls";
+import { useHistory, useLocation, useParams } from "react-router-dom";
+import { INTERACT_URL, TESTNET_URL } from "../../urls";
 import {
     addErc20ToStorage,
     getErc20Storage,
@@ -40,8 +40,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
     const [payees, setPayees] = useState<Payee[]>([]);
     const [availableReef, setAvailableReef] = useState<number>(0);
     const [contract, setContract] = useState<Contract>();
-    const [withdrawFrom, setWithdrawFrom] = useState<string>("");
-    const [withdrawFromError, setWithdrawFromError] = useState<boolean>(false);
+    const [pullFrom, setPullFrom] = useState<string>("");
+    const [pullFromError, setPullFromError] = useState<boolean>(false);
     const [searchAddress, setSearchAddress] = useState<string>("");
     const [searchAddressError, setSearchAddressError] = useState<boolean>(false);
     const [erc20List, setERC20List] = useState<ERC20[]>([]);
@@ -52,6 +52,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
     const [contractNotVerified, setContractNotVerified] = useState<boolean>(false);
     const [progress, setProgress] = useState<Progress>({ loading: false });
     const { contractAddress } = useParams<{ contractAddress: string }>();
+    const isTestnet = useLocation().pathname.includes(TESTNET_URL);
     const history = useHistory();
 
     useEffect(() => {
@@ -74,8 +75,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
     }, [evmAddress, network, contractAddress]);
 
     useEffect(() => {
-        setWithdrawFromError(withdrawFrom != "" && !utils.isAddress(withdrawFrom));
-    }, [withdrawFrom]);
+        setPullFromError(pullFrom != "" && !utils.isAddress(pullFrom));
+    }, [pullFrom]);
 
     useEffect(() => {
         setSearchAddressError(searchAddress != "" && !utils.isAddress(searchAddress));
@@ -120,9 +121,10 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
 
         // Check if contract is verified
         // TODO implement query
-        isContrIndexed(contractAddress)
-            .then((verified: boolean) => setContractNotVerified(!verified))
-            .catch((err: any) => console.log("Error checking if contract is verified:", err));
+        // isContrIndexed(contractAddress)
+        //     .then((verified: boolean) => setContractNotVerified(!verified))
+        //     .catch((err: any) => console.log("Error checking if contract is verified:", err));
+        setContractNotVerified(true);
 
         // Set available REEF in Splitzer
         try {
@@ -182,19 +184,21 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
     }
 
     function searchSplitzer(address: string) {
-        history.push(INTERACT_URL + "/" + address);
+        history.push(
+            isTestnet ? TESTNET_URL + INTERACT_URL + "/" + address : INTERACT_URL + "/" + address
+        );
     }
 
-    async function withdrawFromContract(addressFrom: string) {
+    async function pullFromContract(addressFrom: string) {
         if (!contract) {
             notify("Contract not found.", "error");
             return;
         }
 
         try {
-            await contract.withdrawFromContract(addressFrom);
+            await contract.pullFromContract(addressFrom);
             notify("Amount withdrawn from contract to Splitzer.");
-            setWithdrawFrom("");
+            setPullFrom("");
         } catch (err: any) {
             notify("Error sending funds to Splitzer.", "error");
             console.log("Error withdrawing from contract", err);
@@ -313,44 +317,45 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
     }
 
     return (
-        <div className="margin-auto">
+        <div className="margin-y-auto">
             <div className="title">Interact with Splitzer</div>
 
-            <div className="margin-auto fit-content">
+            <div className="margin-y-auto fit-content">
                 {contractAddress && (
                     <Card>
-                        <div className="bold col-100">Contract address</div>
+                        <div>
+                            {" "}
+                            <div className="sub-title col-100">Contract address</div>
+                            <div className="col-100 color-dimmed">
+                                {contractAddress}
+                                {contractNotVerified && (
+                                    <IconButton
+                                        onClick={() => {
+                                            verifyContract();
+                                        }}
+                                        className="verify-btn"
+                                    >
+                                        <Tooltip id="notVerifiedTooltip" type="exclamation">
+                                            Contract not verified. Click here to verify.
+                                        </Tooltip>
+                                    </IconButton>
+                                )}
 
-                        <div className="col-100">
-                            {contractAddress}
-                            {contractNotVerified && (
-                                <IconButton
-                                    onClick={() => {
-                                        verifyContract();
-                                    }}
-                                    className="verify-btn"
-                                >
-                                    <Tooltip id="notVerifiedTooltip" type="exclamation">
-                                        Contract not verified. Click here to verify.
-                                    </Tooltip>
-                                </IconButton>
+                                <Spinner display={progress.loading} inline={true}></Spinner>
+                            </div>
+                            {payees && payees.length > 0 && (
+                                <div className="sub-title mt-3">
+                                    <div className="col-xl">Owners</div>
+                                    <div className="col-md">%</div>
+                                </div>
                             )}
-
-                            <Spinner display={progress.loading} inline={true}></Spinner>
+                            {payees?.map((payee: Payee, i: number) => (
+                                <div key={i} className="color-dimmed">
+                                    <div className="col-xl">{payee.address}</div>
+                                    <div className="col-md">{payee.shares}%</div>
+                                </div>
+                            ))}
                         </div>
-
-                        {payees && payees.length > 0 && (
-                            <div className="bold">
-                                <div className="col-xl">Owners</div>
-                                <div className="col-md">%</div>
-                            </div>
-                        )}
-                        {payees?.map((payee: Payee, i: number) => (
-                            <div key={i}>
-                                <div className="col-xl">{payee.address}</div>
-                                <div className="col-md">{payee.shares}%</div>
-                            </div>
-                        ))}
                     </Card>
                 )}
 
@@ -438,32 +443,30 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                         </Card>
 
                         <Card>
-                            <div className="sub-title">
-                                Withdraw REEF from contract
-                                <Tooltip id="withdrawFromContractTooltip">
-                                    If the Splitzer is entitled to withdraw <br />
-                                    REEF from another contract that exposes a <b>withdraw()</b>{" "}
+                            <div className="col-100 pull-from-contract">
+                                <span className="sub-title">Pull REEF from contract</span>
+                                <Tooltip id="pullFromContractTooltip">
+                                    If the Splitzer is entitled to withdraw REEF from
                                     <br />
+                                    another contract that exposes a <b>withdraw()</b> <br />
                                     function you can withdraw it from here
                                 </Tooltip>
                             </div>
 
                             <Components.Input.Input
-                                value={withdrawFrom}
-                                onChange={setWithdrawFrom}
-                                className={`form-control col-xl ${
-                                    withdrawFromError ? "error" : ""
-                                }`}
+                                value={pullFrom}
+                                onChange={setPullFrom}
+                                className={`form-control col-xl ${pullFromError ? "error" : ""}`}
                                 placeholder="Contract address"
                             />
                             <div className="col-md">
                                 <Components.Button.Button
                                     onClick={() => {
-                                        withdrawFromContract(withdrawFrom);
+                                        pullFromContract(pullFrom);
                                     }}
-                                    disabled={withdrawFromError || withdrawFrom == ""}
+                                    disabled={pullFromError || pullFrom == ""}
                                 >
-                                    Withdraw
+                                    Pull
                                 </Components.Button.Button>
                             </div>
                         </Card>

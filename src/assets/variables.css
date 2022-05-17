@@ -10,6 +10,10 @@
     --fg-color: #1f2023;
     --fg-sec-color: #171717;
     --border-color: #eaedf3;
+
+    --navigation-height: 70px;
+    --footer-height: 100px;
+    --footer-color: #e1e1e1;
 }
 
 .dark {
@@ -17,5 +21,6 @@
     --bg-color: #171717;
     --fg-color: #ffffff;
     --fg-sec-color: #dddddd;
-    --border-color: #565656;
+    --border-color: #484848;
+    --footer-color: #080808;
 }

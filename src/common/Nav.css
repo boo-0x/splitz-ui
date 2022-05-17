@@ -1,10 +1,9 @@
 .navigation {
-    min-height: 60px;
+    height: var(--navigation-height);
     background-color: var(--bg-sec-color);
-    display: flex;
+    border: solid 1px var(--border-color);
     justify-content: center;
     align-items: center;
-    border: solid 1px var(--border-color);
 }
 
 .navigation + * {

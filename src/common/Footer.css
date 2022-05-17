@@ -1,0 +1,29 @@
+.footer {
+    background-color: var(--footer-color);
+    height: var(--footer-height);
+    z-index: 99;
+    display: flex;
+}
+
+.footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer .logo img {
+    height: 20px;
+    opacity: 0.6;
+    margin-right: 5px;
+    position: relative;
+    bottom: 2px;
+}
+
+.footer-link {
+    text-decoration: none;
+    color: var(--fg-color);
+}
+
+.footer-link:hover {
+    color: var(--primary);
+}

@@ -3,10 +3,9 @@ import { Components, appState, hooks, ReefSigner, Network } from "@reef-defi/rea
 import "./Nav.css";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import { saveSignerLocalPointer } from "../store/internalStore";
-import { CREATE_URL, INTERACT_URL } from "../urls";
-import ColorSchemeToggle from "./ColorSchemeToggle";
+import { CREATE_URL, INTERACT_URL, TESTNET_URL } from "../urls";
 
-const menuItems = [
+let menuItems = [
     { title: "Create", url: CREATE_URL },
     { title: "Interact", url: INTERACT_URL },
 ];
@@ -17,7 +16,16 @@ export interface Nav {
 
 const Nav = ({ display }: Nav): JSX.Element => {
     const history = useHistory();
-    const { pathname } = useLocation();
+    const isTestnet = history.location.pathname.startsWith(TESTNET_URL);
+    if (isTestnet) {
+        menuItems = [
+            { title: "Create", url: TESTNET_URL + CREATE_URL },
+            { title: "Interact", url: TESTNET_URL + INTERACT_URL },
+        ];
+    }
+    let { pathname } = useLocation();
+    console.log(history.location.pathname, pathname);
+
     const signer: ReefSigner | undefined = hooks.useObservableState(appState.selectedSigner$);
     const accounts: ReefSigner[] | undefined = hooks.useObservableState(appState.signers$);
     const network: Network | undefined = hooks.useObservableState(appState.selectedNetworkSubj);
@@ -51,14 +59,13 @@ const Nav = ({ display }: Nav): JSX.Element => {
                             history.push("/");
                         }}
                     >
-                        <img src="/logo.png" height="40px"></img>
+                        <img src="/img/logo.png" height="40px"></img>
                     </button>
                 </div>
 
                 {display && (
                     <nav className="d-flex justify-content-end d-flex-vert-center">
                         <ul className="navigation_menu-items ">{menuItemsView}</ul>
-                        <ColorSchemeToggle></ColorSchemeToggle>
                         {accounts && !!accounts.length && network && (
                             <Components.AccountSelector
                                 accounts={accounts}

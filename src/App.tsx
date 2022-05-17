@@ -7,15 +7,15 @@ import {
     availableNetworks,
 } from "@reef-defi/react-lib";
 import { ToastContainer, toast } from "react-toastify";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import ContentRouter from "./pages/ContentRouter";
 import Nav from "./common/Nav";
+import Footer from "./common/Footer";
 import OptionContext from "./context/OptionContext";
 import { notify } from "./utils/utils";
-import "react-toastify/dist/ReactToastify.css";
-import { useLocation } from "react-router-dom";
 import { TESTNET_URL } from "./urls";
 import TestnetBanner from "./common/TestnetBanner";
+import "react-toastify/dist/ReactToastify.css";
 
 const App = (): JSX.Element => {
     const isTestnet = useLocation().pathname.includes(TESTNET_URL);
@@ -37,6 +37,7 @@ const App = (): JSX.Element => {
                             <Nav display={!loading && !error} />
                             {isTestnet && <TestnetBanner></TestnetBanner>}
                             <ContentRouter />
+                            <Footer></Footer>
                         </>
                     )}
 
