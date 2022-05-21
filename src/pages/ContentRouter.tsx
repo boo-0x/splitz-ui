@@ -11,7 +11,7 @@ import {
 import Home from "./home/Home";
 import { Create } from "./create/Create";
 import { Interact } from "./interact/Interact";
-import NotFound from "./not-found/NotFound";
+import NotFound from "./error/NotFound";
 import Terms from "./terms/Terms";
 import Privacy from "./privacy/Privacy";
 

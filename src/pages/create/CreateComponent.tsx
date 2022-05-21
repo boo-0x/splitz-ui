@@ -174,17 +174,18 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
     return (
         <div className="margin-y-auto">
             <div className="title">Create Splitzer</div>
-            <div className="margin-y-auto fit-content">
+
+            <div className="create-form">
                 {payees?.length && (
-                    <div className="header-row">
-                        <div className="offset-sm col-xl">Address</div>
-                        <div className="col-md">Shares</div>
+                    <div className="row header-row">
+                        <div className="offset-1 col-7">Address</div>
+                        <div className="col-4">Shares</div>
                     </div>
                 )}
 
                 {payees?.map((payee: Payee, i: number) => (
-                    <div key={i} className="mb-1">
-                        <div className="col-sm secondary">
+                    <div key={i} className="row">
+                        <div className="col-1 secondary">
                             {payees.length > 1 && (
                                 <IconButton
                                     onClick={() => {
@@ -195,22 +196,23 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
                                 </IconButton>
                             )}
                         </div>
-
-                        <Components.Input.Input
-                            value={payee.address}
-                            onChange={(val) => addressChange(val, i)}
-                            className={`form-control col-xl ${payee.addressError ? "error" : ""}`}
-                            placeholder="Enter EVM address"
-                        />
-
-                        <Components.Input.NumberInput
-                            value={payee.shares.toString()}
-                            onChange={(val) => sharesChange(val, i)}
-                            className={`form-control col-md ${payee.sharesError ? "error" : ""}`}
-                            placeholder="Shares"
-                        />
-
-                        <div className="col-lg">
+                        <div className="col-7">
+                            <Components.Input.Input
+                                value={payee.address}
+                                onChange={(val) => addressChange(val, i)}
+                                className={`form-control ${payee.addressError ? "error" : ""}`}
+                                placeholder="Enter EVM address"
+                            />
+                        </div>
+                        <div className="col-2">
+                            <Components.Input.NumberInput
+                                value={payee.shares.toString()}
+                                onChange={(val) => sharesChange(val, i)}
+                                className={`form-control ${payee.sharesError ? "error" : ""}`}
+                                placeholder="Shares"
+                            />
+                        </div>
+                        <div className="col-2">
                             {totalShares != undefined &&
                                 payee.shares != undefined &&
                                 payee.shares != 0 && (
@@ -220,8 +222,8 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
                     </div>
                 ))}
 
-                <div className="footer-row">
-                    <div className="col-sm primary">
+                <div className="row footer-row">
+                    <div className="col-1 primary">
                         <IconButton
                             onClick={() => {
                                 addPayee({ address: "", shares: 0 });
@@ -230,11 +232,11 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
                             <AddCircleOutlineIcon></AddCircleOutlineIcon>
                         </IconButton>
                     </div>
-                    <div className="col-xl text-align-right bold">Total shares:</div>
-                    <div className="col-md">{totalShares}</div>
+                    <div className="col-7 text-align-right bold">Total shares:</div>
+                    <div className="col-4">{totalShares}</div>
                 </div>
 
-                <div className="center-content">
+                <div className="center-content mt-2">
                     <Components.Button.Button
                         onClick={() => {
                             createSplitzer(signer, network, payees);

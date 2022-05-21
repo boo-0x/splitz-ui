@@ -15,7 +15,10 @@ import OptionContext from "./context/OptionContext";
 import { notify } from "./utils/utils";
 import { TESTNET_URL } from "./urls";
 import TestnetBanner from "./common/TestnetBanner";
+import NoExtension from "./pages/error/NoExtension";
+import NoAccount from "./pages/error/NoAccount";
 import "react-toastify/dist/ReactToastify.css";
+import Home from "./pages/home/Home";
 
 const App = (): JSX.Element => {
     const isTestnet = useLocation().pathname.includes(TESTNET_URL);
@@ -39,6 +42,21 @@ const App = (): JSX.Element => {
                             <ContentRouter />
                             <Footer></Footer>
                         </>
+                    )}
+
+                    {error?.code === 1 && (
+                        <Home>
+                            <div className="splitz-card mt-5">
+                                <NoExtension />
+                            </div>
+                        </Home>
+                    )}
+                    {error?.code === 2 && (
+                        <Home>
+                            <div className="splitz-card mt-5">
+                                <NoAccount />
+                            </div>
+                        </Home>
                     )}
 
                     <ToastContainer

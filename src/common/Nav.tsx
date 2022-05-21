@@ -24,7 +24,6 @@ const Nav = ({ display }: Nav): JSX.Element => {
         ];
     }
     let { pathname } = useLocation();
-    console.log(history.location.pathname, pathname);
 
     const signer: ReefSigner | undefined = hooks.useObservableState(appState.selectedSigner$);
     const accounts: ReefSigner[] | undefined = hooks.useObservableState(appState.signers$);
@@ -64,7 +63,7 @@ const Nav = ({ display }: Nav): JSX.Element => {
                 </div>
 
                 {display && (
-                    <nav className="d-flex justify-content-end d-flex-vert-center">
+                    <nav className="d-flex">
                         <ul className="navigation_menu-items ">{menuItemsView}</ul>
                         {accounts && !!accounts.length && network && (
                             <Components.AccountSelector

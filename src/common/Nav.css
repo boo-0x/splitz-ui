@@ -108,6 +108,11 @@
     margin-right: 4px;
 }
 
+.nav-content {
+    padding-left: 3.5rem;
+    padding-right: 3.5rem;
+}
+
 .logo-btn {
     border: none;
     background: none;

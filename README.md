@@ -2,6 +2,10 @@
   <img src="./splitz.png" width="800" title="Splitz">
 </p>
 
+<h1>
+Splitz is a dApp for the Reef network, that allows users to split payments amoung several addresses.
+</h1>
+
 ## Development
 
 ### `yarn start`

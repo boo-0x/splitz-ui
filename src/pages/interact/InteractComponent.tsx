@@ -9,7 +9,7 @@ import {
     getErc20Storage,
     removeErc20FromStorage,
 } from "../../store/internalStore";
-import { notify } from "../../utils/utils";
+import { notify, trim } from "../../utils/utils";
 import { ERC20 } from "../../model/erc20";
 import { Payee } from "../../model/payee";
 import { Progress } from "../../model/progress";
@@ -19,9 +19,11 @@ import DownloadForOfflineIcon from "@mui/icons-material/DownloadForOffline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import Tooltip from "../../common/Tooltip";
 import { isContrIndexed, verifySplitzContract } from "../../utils/contract";
 import Spinner from "../../common/Spinner";
+import CopyToClipboard from "react-copy-to-clipboard";
 
 const { Card: CardModule, Modal } = Components;
 const { Card } = CardModule;
@@ -321,54 +323,62 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             <div className="title">Interact with Splitzer</div>
 
             <div className="margin-y-auto fit-content">
-                {contractAddress && (
-                    <Card>
-                        <div>
-                            {" "}
-                            <div className="sub-title col-100">Contract address</div>
-                            <div className="col-100 color-dimmed">
-                                {contractAddress}
-                                {contractNotVerified && (
-                                    <IconButton
-                                        onClick={() => {
-                                            verifyContract();
-                                        }}
-                                        className="verify-btn"
-                                    >
-                                        <Tooltip id="notVerifiedTooltip" type="exclamation">
-                                            Contract not verified. Click here to verify.
-                                        </Tooltip>
-                                    </IconButton>
-                                )}
-
-                                <Spinner display={progress.loading} inline={true}></Spinner>
+                <div className="interact-form">
+                    {contractAddress && (
+                        <div className="splitz-card">
+                            <div className="row">
+                                <div className="offset-1 col-11 sub-title">Contract address</div>
+                            </div>
+                            <div className="row color-dimmed">
+                                <div className="offset-1 col-11">
+                                    {trim(contractAddress)}
+                                    <CopyToClipboard text={contractAddress}>
+                                        <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
+                                    </CopyToClipboard>
+                                    {contractNotVerified && (
+                                        <IconButton
+                                            onClick={() => {
+                                                verifyContract();
+                                            }}
+                                            className="verify-btn"
+                                        >
+                                            <Tooltip id="notVerifiedTooltip" type="exclamation">
+                                                Contract not verified. Click to verify now.
+                                            </Tooltip>
+                                        </IconButton>
+                                    )}
+                                    <Spinner display={progress.loading} inline={true}></Spinner>
+                                </div>
                             </div>
                             {payees && payees.length > 0 && (
-                                <div className="sub-title mt-3">
-                                    <div className="col-xl">Owners</div>
-                                    <div className="col-md">%</div>
+                                <div className="row sub-title">
+                                    <div className="offset-1 col-8">Owners</div>
+                                    <div className="col-3">%</div>
                                 </div>
                             )}
                             {payees?.map((payee: Payee, i: number) => (
-                                <div key={i} className="color-dimmed">
-                                    <div className="col-xl">{payee.address}</div>
-                                    <div className="col-md">{payee.shares}%</div>
+                                <div key={i} className="row color-dimmed">
+                                    <div className="offset-1 col-8">
+                                        {trim(payee.address)}
+                                        <CopyToClipboard text={payee.address}>
+                                            <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
+                                        </CopyToClipboard>
+                                    </div>
+                                    <div className="col-3">{payee.shares}%</div>
                                 </div>
                             ))}
                         </div>
-                    </Card>
-                )}
+                    )}
 
-                {contract && (
-                    <div>
-                        <Card>
-                            <div>
-                                <div className="offset-sm col-md">
+                    {contract && (
+                        <div className="splitz-card">
+                            <div className="row">
+                                <div className="offset-1 col-4">
                                     <img src="./img/reef.png" className="token-logo" />
                                     REEF
                                 </div>
-                                <div className="col-md text-align-right">{availableReef}</div>
-                                <div className="col-sm primary">
+                                <div className="col-4 text-align-right">{availableReef}</div>
+                                <div className="col-3 primary">
                                     <IconButton
                                         onClick={() => {
                                             updateAvailableReef();
@@ -376,8 +386,6 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                     >
                                         <RefreshIcon></RefreshIcon>
                                     </IconButton>
-                                </div>
-                                <div className="col-sm primary">
                                     {availableReef > 0 && (
                                         <IconButton
                                             onClick={() => {
@@ -391,8 +399,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                             </div>
 
                             {erc20List?.map((erc20: ERC20, i: number) => (
-                                <div key={i}>
-                                    <div className="col-sm secondary">
+                                <div key={i} className="row">
+                                    <div className="col-1 secondary">
                                         <IconButton
                                             onClick={() => {
                                                 removeErc20(erc20.address);
@@ -401,7 +409,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                             <HighlightOffIcon></HighlightOffIcon>
                                         </IconButton>
                                     </div>
-                                    <div className="col-md">
+                                    <div className="col-4">
                                         {erc20.logoSrc && erc20.logoSrc != "" ? (
                                             <img src={erc20.logoSrc} className="token-logo" />
                                         ) : (
@@ -409,8 +417,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                         )}
                                         {erc20.ticker}
                                     </div>
-                                    <div className="col-md text-align-right">{erc20.available}</div>
-                                    <div className="col-sm primary">
+                                    <div className="col-4 text-align-right">{erc20.available}</div>
+                                    <div className="col-3 primary">
                                         <IconButton
                                             onClick={() => {
                                                 updateAvalilableErc20(erc20);
@@ -418,8 +426,6 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                         >
                                             <RefreshIcon></RefreshIcon>
                                         </IconButton>
-                                    </div>
-                                    <div className="col-sm primary">
                                         {erc20.available != undefined && erc20.available > 0 && (
                                             <IconButton
                                                 onClick={() => {
@@ -432,80 +438,90 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                     </div>
                                 </div>
                             ))}
-                            <div className="col-sm primary">
-                                <OpenModalButton id="addErc20ModalToggle" className="d-none">
-                                    <span ref={(button) => setOpenModalBtn(button)}></span>
-                                </OpenModalButton>
-                                <IconButton onClick={() => openModalBtn.click()}>
-                                    <AddCircleOutlineIcon></AddCircleOutlineIcon>
-                                </IconButton>
-                            </div>
-                        </Card>
 
-                        <Card>
-                            <div className="col-100 pull-from-contract">
-                                <span className="sub-title">Pull REEF from contract</span>
-                                <Tooltip id="pullFromContractTooltip">
-                                    If the Splitzer is entitled to withdraw REEF from
-                                    <br />
-                                    another contract that exposes a <b>withdraw()</b> <br />
-                                    function you can withdraw it from here
-                                </Tooltip>
+                            <div className="row">
+                                {" "}
+                                <div className="col-1 primary">
+                                    <OpenModalButton id="addErc20ModalToggle" className="d-none">
+                                        <span ref={(button) => setOpenModalBtn(button)}></span>
+                                    </OpenModalButton>
+                                    <IconButton onClick={() => openModalBtn.click()}>
+                                        <AddCircleOutlineIcon></AddCircleOutlineIcon>
+                                    </IconButton>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {contract && (
+                        <div className="splitz-card">
+                            <div className="row pull-from-contract">
+                                <div className="col-12 pb-2">
+                                    <span className="sub-title">Pull REEF from contract</span>
+                                    <Tooltip id="pullFromContractTooltip">
+                                        If the Splitzer is entitled to withdraw REEF from
+                                        <br />
+                                        another contract that exposes a <b>withdraw()</b> <br />
+                                        function you can withdraw it from here
+                                    </Tooltip>
+                                </div>
                             </div>
 
-                            <Components.Input.Input
-                                value={pullFrom}
-                                onChange={setPullFrom}
-                                className={`form-control col-xl ${pullFromError ? "error" : ""}`}
-                                placeholder="Contract address"
-                            />
-                            <div className="col-md">
-                                <Components.Button.Button
-                                    onClick={() => {
-                                        pullFromContract(pullFrom);
-                                    }}
-                                    disabled={pullFromError || pullFrom == ""}
-                                >
-                                    Pull
-                                </Components.Button.Button>
+                            <div className="row">
+                                <div className="col-9">
+                                    <Components.Input.Input
+                                        value={pullFrom}
+                                        onChange={setPullFrom}
+                                        className={`form-control ${pullFromError ? "error" : ""}`}
+                                        placeholder="Contract address"
+                                    />
+                                </div>
+                                <div className="col-3">
+                                    <Components.Button.Button
+                                        onClick={() => {
+                                            pullFromContract(pullFrom);
+                                        }}
+                                        disabled={pullFromError || pullFrom == ""}
+                                    >
+                                        Pull
+                                    </Components.Button.Button>
+                                </div>
                             </div>
-                        </Card>
-                    </div>
-                )}
-
-                <div className="search">
-                    <Components.Input.Input
-                        value={searchAddress}
-                        onChange={setSearchAddress}
-                        className={`form-control col-xl ${searchAddressError ? "error" : ""}`}
-                        placeholder="Splitzer address"
-                    />
-                    <div className="col-md">
-                        <Components.Button.Button
-                            onClick={() => {
-                                searchSplitzer(searchAddress);
-                            }}
-                            disabled={searchAddressError || searchAddress == ""}
-                        >
-                            Search Splitzer
-                        </Components.Button.Button>
-                    </div>
+                        </div>
+                    )}
                 </div>
+
+                <ConfirmationModal
+                    id="addErc20ModalToggle"
+                    title="Add ERC20 token"
+                    confirmBtnLabel="Add"
+                    confirmFun={() => addErc20(erc20Address)}
+                >
+                    <Components.Input.Input
+                        value={erc20Address}
+                        onChange={setErc20Address}
+                        className={`form-control col-xl ${erc20AddressError ? "error" : ""}`}
+                        placeholder="Address"
+                    />
+                </ConfirmationModal>
             </div>
 
-            <ConfirmationModal
-                id="addErc20ModalToggle"
-                title="Add ERC20 token"
-                confirmBtnLabel="Add"
-                confirmFun={() => addErc20(erc20Address)}
-            >
+            <div className="search text-center">
                 <Components.Input.Input
-                    value={erc20Address}
-                    onChange={setErc20Address}
-                    className={`form-control col-xl ${erc20AddressError ? "error" : ""}`}
-                    placeholder="Address"
+                    value={searchAddress}
+                    onChange={setSearchAddress}
+                    className={`form-control ${searchAddressError ? "error" : ""}`}
+                    placeholder="Splitzer address"
                 />
-            </ConfirmationModal>
+                <Components.Button.Button
+                    onClick={() => {
+                        searchSplitzer(searchAddress);
+                    }}
+                    disabled={searchAddressError || searchAddress == ""}
+                >
+                    Search Splitzer
+                </Components.Button.Button>
+            </div>
         </div>
     );
 };

@@ -1,0 +1,101 @@
+.no-extension-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    margin-top: 0.5rem;
+}
+
+.reef-logo {
+    max-height: 60px;
+    margin-right: 10px;
+}
+
+.no-extension-subheader {
+    font-size: 2rem;
+}
+
+.no-extension-text {
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+}
+
+div.download {
+    display: flex;
+    justify-content: center;
+    margin: 1.5rem auto;
+}
+
+.download-button {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    white-space: nowrap;
+    border-radius: 3rem;
+    font-size: 17px;
+    line-height: 22.984px;
+    font-weight: 300;
+    padding: 1.6rem 1.5rem;
+    transition: all 2s;
+    text-decoration: none;
+    color: #fff;
+    background: #681cff;
+    box-shadow: 0 0.313rem 1.25rem -0.625rem #6c179f;
+    width: 250px;
+    margin: auto 0.5rem;
+}
+
+.download-button svg {
+    width: 1.5rem;
+    margin-left: -0.375rem;
+    margin-right: 0.75rem;
+    z-index: 1;
+}
+
+.download-button:active {
+    transition: none;
+    filter: brightness(1.3);
+}
+
+a.download-button span {
+    position: relative;
+    z-index: 1;
+}
+
+a.download-button::after {
+    content: "";
+    z-index: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0), #fd3f83);
+    transform: translateY(100%);
+    transition: opacity 0.6s linear, transform 0.6s linear;
+}
+
+a.download-button:hover {
+    color: white;
+}
+
+a.download-button:hover::after {
+    opacity: 1;
+    transform: none;
+}
+
+@media only screen and (max-width: 840px) {
+    .no-extension-header,
+    div.download {
+        display: block;
+    }
+
+    .download-button {
+        margin: 0.5rem auto;
+    }
+}

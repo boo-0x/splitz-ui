@@ -25,23 +25,20 @@ const Terms = (): JSX.Element => {
                     Splitz's Website for personal, non-commercial transitory viewing only. This is
                     the grant of a license, not a transfer of title, and under this license you may
                     not:
-                    <ul>
-                        <li>modify or copy the materials;</li>
-                        <li>
-                            use the materials for any commercial purpose or for any public display;
-                        </li>
-                        <li>
-                            attempt to reverse engineer any software contained on Splitz's Website;
-                        </li>
-                        <li>
-                            remove any copyright or other proprietary notations from the materials;
-                            of
-                        </li>
-                        <li>
-                            transferring the materials to another person or "mirror" the materials
-                            on any other server.
-                        </li>
-                    </ul>
+                </p>
+                <ul>
+                    <li>modify or copy the materials;</li>
+                    <li>use the materials for any commercial purpose or for any public display;</li>
+                    <li>attempt to reverse engineer any software contained on Splitz's Website;</li>
+                    <li>
+                        remove any copyright or other proprietary notations from the materials; of
+                    </li>
+                    <li>
+                        transferring the materials to another person or "mirror" the materials on
+                        any other server.
+                    </li>
+                </ul>
+                <p>
                     This will let Splitz to terminate upon violations of any of these restrictions.
                     Upon termination, your viewing right will also be terminated and you should
                     destroy any downloaded materials in your possession whether it is printed or

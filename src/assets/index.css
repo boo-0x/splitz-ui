@@ -23,6 +23,7 @@ body,
     -o-transform: scale(1, 1.2);
     background: var(--bg-color);
     text-shadow: 4px 3px 0 var(--primary);
+    text-align: center;
 }
 
 .sub-title {
@@ -34,11 +35,6 @@ body,
     display: flex;
     padding: 2.5rem 3.5rem;
     min-height: calc(100vh - var(--navigation-height) - var(--footer-height));
-}
-
-.nav-content {
-    padding-left: 3.5rem;
-    padding-right: 3.5rem;
 }
 
 .main-content {
@@ -56,18 +52,6 @@ body,
 .confirm-disabled .btn-reef {
     pointer-events: none;
     opacity: 0.65;
-}
-
-.d-flex {
-    display: flex;
-}
-
-.d-flex-space-between {
-    justify-content: space-between;
-}
-
-.d-flex-vert-center {
-    align-items: center;
 }
 
 input.form-control {
@@ -124,8 +108,7 @@ input.form-control.error {
     text-align: right;
 }
 
-.bold,
-.header-row {
+.bold {
     font-weight: bold;
 }
 
@@ -151,6 +134,7 @@ input.form-control.error {
 .copy-button {
     margin-left: 10px;
     color: var(--primary);
+    font-size: 1.3rem !important;
 }
 
 .progress-msg {
@@ -159,8 +143,33 @@ input.form-control.error {
     text-align: center;
 }
 
+.interact-form {
+    min-width: 500px;
+}
+
+.create-form .row,
+.interact-form .row {
+    align-items: center;
+}
+
+.create-form .row {
+    margin-top: 10px;
+}
+
+.interact-form .row > div {
+    padding: 0 1rem;
+}
+
+.splitz-card {
+    background-color: var(--bg-sec-color);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 2rem;
+}
+
 .header-row div {
-    padding-left: 10px;
+    font-weight: bold;
+    padding-left: 15px;
 }
 
 .verify-btn {
@@ -223,6 +232,19 @@ body.dark img.logo-black {
     margin-left: 41px !important;
 }
 
+.css-78trlr-MuiButtonBase-root-MuiIconButton-root:hover {
+    background-color: transparent !important;
+}
+
+.search .btn-reef {
+    display: inline !important;
+    margin-left: 10px;
+}
+
+.search input {
+    width: 380px;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     background: transparent;
@@ -246,9 +268,14 @@ body.dark img.logo-black {
     background: linear-gradient(90deg, var(--primary), var(--secondary));
 }
 
+/* Responsive */
 @media only screen and (max-width: 576px) {
     ::-webkit-scrollbar {
         display: none;
+    }
+
+    .nav-content.navigation nav {
+        display: none !important;
     }
 }
 
@@ -308,6 +335,20 @@ body.dark .modal-header .btn-close {
     background-color: var(--bg-sec-color);
     box-shadow: none !important;
     border: none !important;
+}
+
+.interact-form .card {
+    width: fit-content;
+    margin: auto;
+    margin-bottom: 2rem;
+}
+
+.interact-form .card .card-body {
+    word-wrap: normal !important;
+}
+
+.interact-form .card .card-body .row > div > span {
+    padding: 0 10px;
 }
 
 .border {
