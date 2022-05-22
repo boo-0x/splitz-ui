@@ -198,9 +198,10 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         }
 
         try {
-            await contract.pullFromContract(addressFrom);
+            await contract.withdrawFromContract(addressFrom);
             notify("Amount withdrawn from contract to Splitzer.");
             setPullFrom("");
+            updateAvailableReef();
         } catch (err: any) {
             notify("Error sending funds to Splitzer.", "error");
             console.log("Error withdrawing from contract", err);
@@ -223,21 +224,30 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         }
     }
 
-    async function updateAvalilableErc20(erc20: ERC20) {
+    async function updateAvalilableErc20(erc20Address: string) {
         if (!contract) {
             notify("Contract not found.", "error");
             return;
         }
 
+        let available = 0;
         try {
-            const available: any = await contract.availableERC20(erc20.address, evmAddress);
-            erc20.available = Number(available) / 1e18;
+            let res: any = await contract.availableERC20(erc20Address, evmAddress);
+            available = Number(res) / 1e18;
         } catch (err: any) {
             if (!noSharesError(err)) {
                 console.log("Error getting ERC20 balance:", err);
+                return;
             }
-            erc20.available = 0;
         }
+
+        const updatedErc20List = [...(erc20List || [])];
+        updatedErc20List.forEach((erc20: ERC20) => {
+            if (erc20.address === erc20Address) {
+                erc20.available = available;
+            }
+        });
+        setERC20List(updatedErc20List);
     }
 
     async function releaseReef() {
@@ -248,6 +258,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
 
         try {
             await contract.release(evmAddress);
+            notify("Successful withdrawal!");
+            updateAvailableReef();
         } catch (err: any) {
             console.log("Error withdrawing REEF from Splitzer:", err);
         }
@@ -261,6 +273,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
 
         try {
             await contract.releaseERC20(erc20Address, evmAddress);
+            notify("Successful withdrawal!");
+            updateAvalilableErc20(erc20Address);
         } catch (err: any) {
             console.log("Error withdrawing REEF from Splitzer:", err);
         }
@@ -421,7 +435,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                     <div className="col-3 primary">
                                         <IconButton
                                             onClick={() => {
-                                                updateAvalilableErc20(erc20);
+                                                updateAvalilableErc20(erc20.address);
                                             }}
                                         >
                                             <RefreshIcon></RefreshIcon>

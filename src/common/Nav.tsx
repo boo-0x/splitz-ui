@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Components, appState, hooks, ReefSigner, Network } from "@reef-defi/react-lib";
 import "./Nav.css";
 import { Link, useHistory, useLocation } from "react-router-dom";
@@ -33,6 +33,38 @@ const Nav = ({ display }: Nav): JSX.Element => {
         appState.selectAddressSubj.next(index != null ? accounts?.[index].address : undefined);
     };
 
+    useEffect(() => {
+        // Send message after accounts are loaded to parent app (if Splitz is used in an iframe)
+        if (accounts && accounts.length) {
+            window.top?.postMessage({ type: "accountsLoaded", message: true }, "*");
+        }
+
+        // Listen to account change message from parent app (if Splitz is used in an iframe)
+        window.addEventListener(
+            "message",
+            (ev: MessageEvent<{ type: string; message: string }>) => {
+                if (typeof ev.data !== "object" || ev.data?.type !== "addressChange") {
+                    return;
+                }
+
+                if (
+                    typeof ev.data === "object" &&
+                    ev.data?.type === "addressChange" &&
+                    ev.data.message &&
+                    accounts &&
+                    accounts.length
+                ) {
+                    const accountIndex = (accounts || []).findIndex(
+                        (account: ReefSigner) => account.address == ev.data.message
+                    );
+                    if (accountIndex > -1) {
+                        selectAccount(accountIndex);
+                    }
+                }
+            }
+        );
+    }, [accounts]);
+
     const menuItemsView = menuItems.map((item) => {
         let classes = "navigation_menu-items_menu-item";
         if (pathname === item.url) {
@@ -55,7 +87,7 @@ const Nav = ({ display }: Nav): JSX.Element => {
                         type="button"
                         className="logo-btn"
                         onClick={() => {
-                            history.push("/");
+                            history.push(isTestnet ? TESTNET_URL : "/");
                         }}
                     >
                         <img src="/img/logo.png" height="40px"></img>

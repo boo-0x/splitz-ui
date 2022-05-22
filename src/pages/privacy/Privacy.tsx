@@ -7,8 +7,8 @@ const Privacy = (): JSX.Element => {
 
             <div className="margin-y-auto fit-content terms-list">
                 <p>
-                    At Splitz, accessible from https://splitz.app/, one of our main priorities is
-                    the privacy of our visitors. This Privacy Policy document contains types of
+                    At Splitz, accessible from https://splitz-dapp.com/, one of our main priorities
+                    is the privacy of our visitors. This Privacy Policy document contains types of
                     information that is collected and recorded by Splitz and how we use it.
                 </p>
                 <p>

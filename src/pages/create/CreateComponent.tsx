@@ -34,10 +34,14 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
     const history = useHistory();
 
     useEffect(() => {
+        if (!signer) {
+            return;
+        }
+
         if (!payees?.length) {
-            addPayee({ address: signer ? signer.evmAddress : "", shares: 0 });
-        } else if (payees[0].address === "") {
-            addressChange(signer ? signer.evmAddress : "", 0);
+            addPayee({ address: signer.evmAddress, shares: 0 });
+        } else {
+            addressChange(signer.evmAddress, 0);
         }
     }, [signer]);
 
