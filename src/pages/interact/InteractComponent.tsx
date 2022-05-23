@@ -104,7 +104,6 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         }
 
         const newContract = new Contract(contractAddress, metadataDeploy.abi, signer.signer);
-        setContract(newContract);
 
         // Set payees (owners)
         try {
@@ -119,6 +118,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             console.log("Error setting payees:", err);
             return;
         }
+
+        setContract(newContract);
 
         // Check if contract is verified
         // TODO implement query
@@ -338,7 +339,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
 
             <div className="margin-y-auto fit-content">
                 <div className="interact-form">
-                    {contractAddress && (
+                    {contract && (
                         <div className="splitz-card">
                             <div className="row">
                                 <div className="offset-1 col-11 sub-title">Contract address</div>
