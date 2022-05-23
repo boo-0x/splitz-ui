@@ -1,6 +1,5 @@
 .toggle-container {
     display: flex;
-    margin-right: 20px;
 }
 
 .react-toggle--checked .react-toggle-track {
@@ -23,11 +22,11 @@
 }
 
 .react-toggle-track-check {
-    top: 5px;
+    top: 6px;
     left: 3px;
 }
 
 .react-toggle-track-x {
-    top: 7px;
+    top: 8px;
     right: 14px;
 }

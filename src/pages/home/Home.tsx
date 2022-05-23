@@ -11,12 +11,12 @@ const Home: React.FC<any> = ({ children }): JSX.Element => {
             <div className="content-home">
                 <div className="home-summary margin-y-auto">
                     <p>
-                        Splitz allows you to split payments amoung several addresses in the Reef
+                        Splitz allows you to split payments among several addresses in the Reef
                         network.
                     </p>
                     <p>
                         Every Splitzer is a secure smart contract that will automatically split any
-                        amount of REEF or ERC-20 tokens that the contract receives amoung all the
+                        amount of REEF or ERC-20 tokens received by the contract among all the
                         owners.
                     </p>
 
@@ -30,8 +30,8 @@ const Home: React.FC<any> = ({ children }): JSX.Element => {
                     <div className="section-content">
                         <p>
                             Create a new Splitzer specifying the list of owners and their ownership
-                            percentages. You can create any number of shares and distribute among
-                            the owners as you wish.
+                            percentages. You can create any number of shares and distribute them
+                            among the owners as you wish.
                         </p>
                     </div>
                 </div>
@@ -55,10 +55,10 @@ const Home: React.FC<any> = ({ children }): JSX.Element => {
                     <div className="section-content">
                         <p>
                             Splitzer owners can also pull REEF from another contract to the Splitzer
-                            contract, if that contact has a <b>withdraw()</b> function. This is
-                            useful to interact with contracts that only allow to trigger the
-                            withdrawal of REEF to the recipient of the funds. Such type of contracts
-                            include <b>Sqwid marketplace</b>.
+                            contract if that contact has a <b>withdraw()</b> function. This is
+                            useful to interact with contracts that only allow triggerring the
+                            withdrawal of REEF to the recipient of the funds. Such types of
+                            contracts include <b>Sqwid marketplace</b>.
                         </p>
                     </div>
                 </div>

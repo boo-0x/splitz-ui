@@ -9,7 +9,7 @@ import {
     getErc20Storage,
     removeErc20FromStorage,
 } from "../../store/internalStore";
-import { notify, trim } from "../../utils/utils";
+import { notify, trim, formatAmount } from "../../utils/utils";
 import { ERC20 } from "../../model/erc20";
 import { Payee } from "../../model/payee";
 import { Progress } from "../../model/progress";
@@ -21,12 +21,11 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import Tooltip from "../../common/Tooltip";
-import { isContrIndexed, verifySplitzContract } from "../../utils/contract";
+import { isContrVerified, verifySplitzContract } from "../../utils/contract";
 import Spinner from "../../common/Spinner";
 import CopyToClipboard from "react-copy-to-clipboard";
 
-const { Card: CardModule, Modal } = Components;
-const { Card } = CardModule;
+const { Modal } = Components;
 const { OpenModalButton, default: ConfirmationModal } = Modal;
 
 interface InteractComponent {
@@ -123,10 +122,9 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
 
         // Check if contract is verified
         // TODO implement query
-        // isContrIndexed(contractAddress)
+        // isContrVerified(contractAddress)
         //     .then((verified: boolean) => setContractNotVerified(!verified))
         //     .catch((err: any) => console.log("Error checking if contract is verified:", err));
-        setContractNotVerified(true);
 
         // Set available REEF in Splitzer
         try {
@@ -136,6 +134,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             if (!noSharesError(err)) {
                 console.log("Error setting available REEF:", err);
             }
+            setAvailableReef(0);
         }
 
         // Set available ERC20s in Splitzer
@@ -215,12 +214,13 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         }
 
         try {
-            const availableReefRes: any = await contract.available(evmAddress);
-            setAvailableReef(Number(availableReefRes) / 1e18);
+            const res: any = await contract.available(evmAddress);
+            setAvailableReef(Number(res) / 1e18);
         } catch (err: any) {
             if (!noSharesError(err)) {
                 console.log("Error setting available REEF:", err);
             }
+            setAvailableReef(0);
         }
     }
 
@@ -365,7 +365,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                 </div>
                             </div>
                             {payees && payees.length > 0 && (
-                                <div className="row sub-title">
+                                <div className="row sub-title mt-2">
                                     <div className="offset-1 col-8">Owners</div>
                                     <div className="col-3">%</div>
                                 </div>
@@ -378,7 +378,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                             <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
                                         </CopyToClipboard>
                                     </div>
-                                    <div className="col-3">{payee.shares}%</div>
+                                    <div className="col-3">{payee.shares.toFixed(2)}</div>
                                 </div>
                             ))}
                         </div>
@@ -391,7 +391,9 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                     <img src="./img/reef.png" className="token-logo" />
                                     REEF
                                 </div>
-                                <div className="col-4 text-align-right">{availableReef}</div>
+                                <div className="col-4 text-align-right">
+                                    {formatAmount(availableReef)}
+                                </div>
                                 <div className="col-3 primary">
                                     <IconButton
                                         onClick={() => {
@@ -431,7 +433,9 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                         )}
                                         {erc20.ticker}
                                     </div>
-                                    <div className="col-4 text-align-right">{erc20.available}</div>
+                                    <div className="col-4 text-align-right">
+                                        {formatAmount(erc20.available)}
+                                    </div>
                                     <div className="col-3 primary">
                                         <IconButton
                                             onClick={() => {
@@ -454,7 +458,6 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                             ))}
 
                             <div className="row">
-                                {" "}
                                 <div className="col-1 primary">
                                     <OpenModalButton id="addErc20ModalToggle" className="d-none">
                                         <span ref={(button) => setOpenModalBtn(button)}></span>

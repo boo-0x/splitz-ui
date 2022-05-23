@@ -160,6 +160,21 @@ input.form-control.error {
     margin-top: 10px;
 }
 
+.open-explorer {
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--fg-sec-color);
+}
+
+.open-explorer a {
+    text-decoration: none;
+    color: var(--primary);
+}
+
+.open-explorer svg {
+    font-size: 1.3rem !important;
+}
+
 .interact-form .row > div {
     padding: 0 1rem;
 }
@@ -299,7 +314,7 @@ body.dark img.logo-black {
 }
 
 .modal-dialog {
-    width: 470px !important;
+    width: 480px !important;
     margin-left: auto !important;
     margin-right: auto !important;
 }

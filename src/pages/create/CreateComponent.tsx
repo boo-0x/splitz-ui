@@ -4,16 +4,17 @@ import { Contract, ContractFactory, utils } from "ethers";
 import { verifySplitzContract } from "../../utils/contract";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { metadataDeploy } from "../../utils/deployData";
-import { notify } from "../../utils/utils";
+import { explorerUrl, notify } from "../../utils/utils";
 import IconButton from "@mui/material/IconButton";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Spinner from "../../common/Spinner";
 import { Payee } from "../../model/payee";
 import { Progress } from "../../model/progress";
-import { useHistory, useLocation } from "react-router-dom";
-import { INTERACT_URL, TESTNET_URL } from "../../urls";
+import { useLocation } from "react-router-dom";
+import { TESTNET_URL } from "../../urls";
 
 const { Modal } = Components;
 const { OpenModalButton, default: ConfirmationModal } = Modal;
@@ -31,7 +32,6 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
     const [progress, setProgress] = useState<Progress>({ loading: false });
     const [openModalBtn, setOpenModalBtn] = useState<any>();
     const isTestnet = useLocation().pathname.includes(TESTNET_URL);
-    const history = useHistory();
 
     useEffect(() => {
         if (!signer) {
@@ -65,7 +65,7 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         let updatedPayees = [...(payees || [])];
         let hasErrors = false;
 
-        updatedPayees.forEach((payee: Payee, index: number) => {
+        updatedPayees.forEach((payee: Payee) => {
             if (!utils.isAddress(payee.address)) {
                 payee.addressError = true;
                 hasErrors = true;
@@ -93,43 +93,46 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         setProgress({ loading: true, msg: "Creating contract..." });
 
         ///////////////////////// TODO remove
-        setTimeout(() => {
-            setContractAddress("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-            setProgress({ loading: true, msg: "Verifying contract..." });
-        }, 2000);
+        // setTimeout(() => {
+        //     setContractAddress("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        //     setProgress({ loading: true, msg: "Verifying contract..." });
+        // }, 1000);
 
-        setTimeout(() => {
-            setProgress({ loading: false });
-            notify("Error verifying contract.", "error");
-            openModalBtn.click();
-        }, 4000);
+        // setTimeout(() => {
+        //     setProgress({ loading: false });
+        //     notify("Error verifying contract.", "error");
+        //     openModalBtn.click();
+        // }, 2000);
         ///////////////////////// TODO
 
-        // try {
-        //     contract = await splitzContract.deploy(...args);
-        // } catch (err: any) {
-        //     notify("Error deploying contract.", "error");
-        //     console.log("Error deploying contract:", err);
-        //     setProgress({ loading: false });
-        //     return;
-        // }
-        // setContractAddress(contract.address);
+        try {
+            contract = await splitzContract.deploy(...args);
+        } catch (err: any) {
+            notify("Error deploying contract.", "error");
+            console.log("Error deploying contract:", err);
+            setProgress({ loading: false });
+            return;
+        }
+        setContractAddress(contract.address);
 
+        // TODO verification
         // setProgress({ loading: true, msg: "Verifying contract..." });
         // try {
-        // const verified = await verifySplitzContract(
-        //     contract.address,
-        //     JSON.stringify(args),
-        //     network
-        // );
-        // if (!verified) {
-        //     notify("Error verifying contract.", "error");
-        // }
+        //     const verified = await verifySplitzContract(
+        //         contract.address,
+        //         JSON.stringify(args),
+        //         network
+        //     );
+        //     if (!verified) {
+        //         notify("Error verifying contract.", "error");
+        //     }
         // } catch (err) {
         //     notify("Error verifying contract.", "error");
         //     console.log("Error verifying contract:", err);
         // }
-        // setProgress({ loading: false });
+
+        openModalBtn.click();
+        setProgress({ loading: false });
     }
 
     function addPayee(payee: Payee) {
@@ -164,14 +167,6 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             updatedPayees.reduce((acum, payee) => {
                 return acum + payee.shares;
             }, 0)
-        );
-    }
-
-    function navigateInteract() {
-        history.push(
-            isTestnet
-                ? TESTNET_URL + INTERACT_URL + "/" + contractAddress
-                : INTERACT_URL + "/" + contractAddress
         );
     }
 
@@ -261,10 +256,8 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             <ConfirmationModal
                 id="contractCreatedModalToggle"
                 title="Splitzer created"
-                confirmBtnLabel="Interact"
-                confirmFun={() => {
-                    navigateInteract();
-                }}
+                confirmBtnLabel="Close"
+                confirmFun={() => {}}
             >
                 {contractAddress && (
                     <div>
@@ -273,6 +266,15 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
                             <CopyToClipboard text={contractAddress}>
                                 <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
                             </CopyToClipboard>
+                        </div>
+                        <div className="open-explorer">
+                            Open in explorer{" "}
+                            <a
+                                href={explorerUrl(isTestnet) + "/contract/" + contractAddress}
+                                target="_blank"
+                            >
+                                <OpenInNewIcon />
+                            </a>
                         </div>
                     </div>
                 )}
