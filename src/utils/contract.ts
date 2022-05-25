@@ -20,11 +20,13 @@ export interface VerificationContractReq extends BaseContract {
     address: string;
     filename: string;
     arguments: string;
+    license: string;
 }
 
 export interface ReefContract extends BaseContract {
     filename: string;
     contractName: string;
+    license: string;
 }
 
 const contractVerificatorApi = axios.create();
@@ -121,7 +123,6 @@ const verifyContract = async (
     try {
         const contractAddress = toContractAddress(deployedContractAddress);
         if (!(await isContrIndexed(contractAddress))) {
-            // if (!await firstValueFrom(isContractIndexed$(contractAddress))) {
             return false;
         }
         const body: VerificationContractReq = {
@@ -133,7 +134,7 @@ const verifyContract = async (
             source: contract.source,
             optimization: contract.optimization,
             compilerVersion: contract.compilerVersion,
-            // not required - license: contract.license,
+            license: contract.license,
             runs: contract.runs,
         };
         await contractVerificatorApi.post<VerificationContractReq, AxiosResponse<string>>(
@@ -165,6 +166,7 @@ export const verifySplitzContract = async (
             compilerVersion: `v${metadataArtifactDeploy.compiler.version}`,
             optimization: metadataArtifactDeploy.settings.optimizer.enabled.toString(),
             filename: compTargetFileName,
+            license: metadataArtifactDeploy.license,
             runs: metadataArtifactDeploy.settings.optimizer.runs,
         },
         args,

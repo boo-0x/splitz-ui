@@ -122,7 +122,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         setContract(newContract);
 
         // Check if contract is verified
-        // TODO implement query
+        // TODO
         // isContrVerified(contractAddress)
         //     .then((verified: boolean) => setContractNotVerified(!verified))
         //     .catch((err: any) => console.log("Error checking if contract is verified:", err));

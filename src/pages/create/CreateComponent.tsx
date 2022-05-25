@@ -85,25 +85,14 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         }
 
         const args = [addresses, shares];
-        const deployAbi = metadataDeploy.abi;
-        const deployBytecode = metadataDeploy.bytecode;
-        const splitzContract = new ContractFactory(deployAbi, deployBytecode, signer?.signer);
+        const splitzContract = new ContractFactory(
+            metadataDeploy.abi,
+            metadataDeploy.bytecode,
+            signer?.signer
+        );
         let contract: Contract | undefined;
 
         setProgress({ loading: true, msg: "Creating contract..." });
-
-        ///////////////////////// TODO remove
-        // setTimeout(() => {
-        //     setContractAddress("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-        //     setProgress({ loading: true, msg: "Verifying contract..." });
-        // }, 1000);
-
-        // setTimeout(() => {
-        //     setProgress({ loading: false });
-        //     notify("Error verifying contract.", "error");
-        //     openModalBtn.click();
-        // }, 2000);
-        ///////////////////////// TODO
 
         try {
             contract = await splitzContract.deploy(...args);
@@ -115,21 +104,20 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         }
         setContractAddress(contract.address);
 
-        // TODO verification
-        // setProgress({ loading: true, msg: "Verifying contract..." });
-        // try {
-        //     const verified = await verifySplitzContract(
-        //         contract.address,
-        //         JSON.stringify(args),
-        //         network
-        //     );
-        //     if (!verified) {
-        //         notify("Error verifying contract.", "error");
-        //     }
-        // } catch (err) {
-        //     notify("Error verifying contract.", "error");
-        //     console.log("Error verifying contract:", err);
-        // }
+        setProgress({ loading: true, msg: "Verifying contract..." });
+        try {
+            const verified = await verifySplitzContract(
+                contract.address,
+                JSON.stringify(args),
+                network
+            );
+            if (!verified) {
+                notify("Error verifying contract.", "error");
+            }
+        } catch (err) {
+            notify("Error verifying contract.", "error");
+            console.log("Error verifying contract:", err);
+        }
 
         openModalBtn.click();
         setProgress({ loading: false });
