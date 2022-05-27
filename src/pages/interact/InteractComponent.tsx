@@ -110,7 +110,11 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             const totalShares = Number(await newContract.totalShares());
             const payeesResp = await newContract.getPayees();
             const mappedPayees: Payee[] = payeesResp.map((payee: any) => {
-                return { address: payee.payee, shares: (Number(payee.share) * 100) / totalShares };
+                return {
+                    address: payee.payee,
+                    shares: payee.share,
+                    sharesPercentage: (Number(payee.share) * 100) / totalShares,
+                };
             });
             setPayees(mappedPayees);
         } catch (err: any) {
@@ -122,10 +126,11 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
         setContract(newContract);
 
         // Check if contract is verified
-        // TODO
-        // isContrVerified(contractAddress)
-        //     .then((verified: boolean) => setContractNotVerified(!verified))
-        //     .catch((err: any) => console.log("Error checking if contract is verified:", err));
+        isContrVerified(contractAddress)
+            .then((verified: boolean) => {
+                setContractNotVerified(!verified);
+            })
+            .catch((err: any) => console.log("Error checking if contract is verified:", err));
 
         // Set available REEF in Splitzer
         try {
@@ -173,7 +178,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
             );
             if (verified) {
                 notify("Contract has been verified.");
-                setContractNotVerified(true);
+                setContractNotVerified(false);
             } else {
                 notify("Error verifying contract.", "error");
             }
@@ -339,7 +344,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
 
             <div className="margin-y-auto fit-content">
                 <div className="interact-form">
-                    {contract && (
+                    {contract && contractAddress && (
                         <div className="splitz-card">
                             <div className="row">
                                 <div className="offset-1 col-11 sub-title">Contract address</div>
@@ -379,13 +384,17 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                                             <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
                                         </CopyToClipboard>
                                     </div>
-                                    <div className="col-3">{payee.shares.toFixed(2)}</div>
+                                    <div className="col-3">
+                                        {payee.sharesPercentage
+                                            ? payee.sharesPercentage.toFixed(2)
+                                            : "?"}
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    {contract && (
+                    {contract && contractAddress && (
                         <div className="splitz-card">
                             <div className="row">
                                 <div className="offset-1 col-4">
@@ -471,7 +480,7 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                         </div>
                     )}
 
-                    {contract && (
+                    {contract && contractAddress && (
                         <div className="splitz-card">
                             <div className="row pull-from-contract">
                                 <div className="col-12 pb-2">

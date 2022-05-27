@@ -41,10 +41,9 @@ const CONTRACT_EXISTS_GQL = gql`
     }
 `;
 
-// TODO build query
 const CONTRACT_VERIFIED_GQL = gql`
     subscription query($address: String!) {
-        contract(where: { address: { _eq: $address } }) {
+        verified_contract(where: { address: { _eq: $address } }) {
             address
         }
     }
@@ -94,9 +93,12 @@ export const isContrVerified = async (address: string): Promise<boolean> =>
             })
             .subscribe({
                 next(result) {
-                    if (result.data.contract && result.data.contract.length) {
+                    if (result.data.verified_contract && result.data.verified_contract.length) {
                         clearTimeout(tmt);
                         resolve(true);
+                    } else {
+                        clearTimeout(tmt);
+                        resolve(false);
                     }
                 },
                 error(err) {
