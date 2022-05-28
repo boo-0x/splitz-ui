@@ -45,6 +45,13 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         }
     }, [signer]);
 
+    useEffect(() => {
+        // Send message after contract created to parent app (if Splitz is used in an iframe)
+        if (contractAddress && contractAddress !== "") {
+            window.top?.postMessage({ type: "splitzerCreated", message: contractAddress }, "*");
+        }
+    }, [contractAddress]);
+
     async function createSplitzer(
         signer?: ReefSigner,
         network?: Network,
