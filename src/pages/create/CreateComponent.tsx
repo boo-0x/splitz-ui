@@ -103,7 +103,6 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             return;
         }
         setContractAddress(contract.address);
-        window.top?.postMessage({ type: "splitzerCreated", message: contract.address }, "*");
 
         setProgress({ loading: true, msg: "Verifying contract..." });
         try {
@@ -120,6 +119,12 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             console.log("Error verifying contract:", err);
         }
 
+        const btn = document.querySelector(
+            "#contractCreatedModalToggle .btn-reef"
+        ) as HTMLButtonElement | null;
+        if (btn !== null) {
+            btn.disabled = true;
+        }
         openModalBtn.click();
         setProgress({ loading: false });
     }
@@ -157,6 +162,16 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
                 return acum + payee.shares;
             }, 0)
         );
+    }
+
+    function addressCopied() {
+        notify("Address copied to clipboard.");
+        const btn = document.querySelector(
+            "#contractCreatedModalToggle .btn-reef"
+        ) as HTMLButtonElement | null;
+        if (btn !== null) {
+            btn.disabled = false;
+        }
     }
 
     return (
@@ -252,7 +267,7 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
                     <div>
                         <div>
                             {contractAddress}
-                            <CopyToClipboard text={contractAddress}>
+                            <CopyToClipboard text={contractAddress} onCopy={() => addressCopied()}>
                                 <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
                             </CopyToClipboard>
                         </div>
