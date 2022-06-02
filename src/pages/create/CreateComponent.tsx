@@ -2,22 +2,18 @@ import { Components, Network, ReefSigner, utils as reefUtils } from "@reef-defi/
 import React, { useEffect, useState } from "react";
 import { Contract, ContractFactory, utils } from "ethers";
 import { verifySplitzContract } from "../../utils/contract";
-import { CopyToClipboard } from "react-copy-to-clipboard";
 import { metadataDeploy } from "../../utils/deployData";
 import { explorerUrl, notify } from "../../utils/utils";
 import IconButton from "@mui/material/IconButton";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
-import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Spinner from "../../common/Spinner";
 import { Payee } from "../../model/payee";
 import { Progress } from "../../model/progress";
 import { useLocation } from "react-router-dom";
 import { TESTNET_URL } from "../../urls";
-
-const { Modal } = Components;
-const { OpenModalButton, default: ConfirmationModal } = Modal;
+import ConfirmationModal, { OpenModalButton } from "../../common/Modal";
 
 interface CreateComponent {
     signer: ReefSigner | undefined;
@@ -25,12 +21,27 @@ interface CreateComponent {
     onTxUpdate?: reefUtils.TxStatusHandler;
 }
 
+interface ConfirmModalBtn {
+    label: string;
+    func: any;
+    closeOnClick: boolean;
+}
+
 export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Element => {
+    const confirmModalBtnCopy: ConfirmModalBtn = {
+        label: "Copy to clipboard",
+        func: () => {
+            copyAddress();
+        },
+        closeOnClick: false,
+    };
+
     const [payees, setPayees] = useState<Payee[]>();
     const [totalShares, setTotalShares] = useState<number>();
     const [contractAddress, setContractAddress] = useState<string>();
     const [progress, setProgress] = useState<Progress>({ loading: false });
     const [openModalBtn, setOpenModalBtn] = useState<any>();
+    const [confirmModalBtn, setConfirmModalBtn] = useState<ConfirmModalBtn>(confirmModalBtnCopy);
     const isTestnet = useLocation().pathname.includes(TESTNET_URL);
 
     useEffect(() => {
@@ -44,6 +55,10 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             addressChange(signer.evmAddress, 0);
         }
     }, [signer]);
+
+    useEffect(() => {
+        setConfirmModalBtn(confirmModalBtnCopy);
+    }, [contractAddress]);
 
     async function createSplitzer(
         signer?: ReefSigner,
@@ -119,12 +134,6 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             console.log("Error verifying contract:", err);
         }
 
-        const btn = document.querySelector(
-            "#contractCreatedModalToggle .btn-reef"
-        ) as HTMLButtonElement | null;
-        if (btn !== null) {
-            btn.disabled = true;
-        }
         openModalBtn.click();
         setProgress({ loading: false });
     }
@@ -164,14 +173,19 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
         );
     }
 
-    function addressCopied() {
-        notify("Address copied to clipboard.");
-        const btn = document.querySelector(
-            "#contractCreatedModalToggle .btn-reef"
-        ) as HTMLButtonElement | null;
-        if (btn !== null) {
-            btn.disabled = false;
+    function copyAddress() {
+        if (!contractAddress) {
+            notify("Error copying address to clipboard.", "error");
+        } else {
+            navigator.clipboard.writeText(contractAddress);
+            notify("Address copied to clipboard.");
         }
+
+        setConfirmModalBtn({
+            label: "Close",
+            func: () => {},
+            closeOnClick: true,
+        });
     }
 
     return (
@@ -259,18 +273,16 @@ export const CreateComponent = ({ signer, network }: CreateComponent): JSX.Eleme
             </OpenModalButton>
             <ConfirmationModal
                 id="contractCreatedModalToggle"
+                backdropClose={false}
                 title="Splitzer created"
-                confirmBtnLabel="Close"
-                confirmFun={() => {}}
+                btnLabel={confirmModalBtn.label}
+                onClickFun={confirmModalBtn.func}
+                closeOnBtnClick={confirmModalBtn.closeOnClick}
             >
                 {contractAddress && (
                     <div>
-                        <div>
-                            {contractAddress}
-                            <CopyToClipboard text={contractAddress} onCopy={() => addressCopied()}>
-                                <ContentPasteIcon className="copy-button hover-pointer"></ContentPasteIcon>
-                            </CopyToClipboard>
-                        </div>
+                        <div>Contract address:</div>
+                        <div className="color-dimmed">{contractAddress}</div>
                         <div className="open-explorer">
                             Open in explorer{" "}
                             <a

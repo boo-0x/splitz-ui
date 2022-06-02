@@ -24,9 +24,7 @@ import Tooltip from "../../common/Tooltip";
 import { isContrVerified, verifySplitzContract } from "../../utils/contract";
 import Spinner from "../../common/Spinner";
 import CopyToClipboard from "react-copy-to-clipboard";
-
-const { Modal } = Components;
-const { OpenModalButton, default: ConfirmationModal } = Modal;
+import ConfirmationModal, { OpenModalButton } from "../../common/Modal";
 
 interface InteractComponent {
     signer: ReefSigner | undefined;
@@ -521,8 +519,8 @@ export const InteractComponent = ({ signer, network }: InteractComponent): JSX.E
                 <ConfirmationModal
                     id="addErc20ModalToggle"
                     title="Add ERC20 token"
-                    confirmBtnLabel="Add"
-                    confirmFun={() => addErc20(erc20Address)}
+                    btnLabel="Add"
+                    onClickFun={() => addErc20(erc20Address)}
                 >
                     <Components.Input.Input
                         value={erc20Address}
